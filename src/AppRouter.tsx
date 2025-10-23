@@ -15,7 +15,6 @@ import EditAppPage from "./pages/EditAppPage";
 import RepositoriesPage from "./pages/RepositoriesPage";
 import AnnounceRepositoryPage from "./pages/AnnounceRepositoryPage";
 import CreateIssuePage from "./pages/CreateIssuePage";
-import CommunityPage from "./pages/CommunityPage";
 import RepositoryPage from "./pages/RepositoryPage";
 import PatchPage from "./pages/PatchPage";
 import DVMPage from "./pages/DVMPage";
@@ -27,7 +26,8 @@ export function AppRouter() {
     <BrowserRouter>
       <ScrollToTop />
       <Routes>
-        <Route path="/" element={<Index />} />
+        <Route path="/" element={<AppsPage />} />
+        <Route path="/nips" element={<Index />} />
         <Route path="/nip/:id" element={<NipRedirect />} />
         <Route path="/create" element={<CreateNipPage />} />
         <Route path="/edit/:naddr" element={<EditNipPage />} />
@@ -42,7 +42,6 @@ export function AppRouter() {
         <Route path="/repositories/:naddr/issues/create" element={<CreateIssuePage />} />
         <Route path="/repositories/:nip19/issues/:issueId" element={<IssuePage />} />
         <Route path="/repositories/:nip19/patches/:patchId" element={<PatchPage />} />
-        <Route path="/community" element={<CommunityPage />} />
         <Route path="/dvm" element={<DVMPage />} />
         <Route path="/kind/:k" element={<KindPage />} />
         <Route path="/:nip19" element={<Nip19Page />} />

@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { LoginArea } from "@/components/auth/LoginArea";
 import { Footer } from "@/components/Footer";
-import { Plus, Zap, Menu, Smartphone, GitBranch, Moon, Sun, Users, Bot } from "lucide-react";
+import { Plus, Zap, Menu, Smartphone, GitBranch, Moon, Sun, Bot } from "lucide-react";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import {
   Sheet,
@@ -41,9 +41,9 @@ export function Layout({ children }: LayoutProps) {
           {!isMobile && (
             <nav className="flex items-center space-x-2">
               <Button variant="ghost" asChild className="text-foreground hover:bg-primary/10 hover:text-primary transition-all duration-300">
-                <Link to="/community">
-                  <Users className="h-4 w-4 mr-2" />
-                  Community
+                <Link to="/nips">
+                  <Zap className="h-4 w-4 mr-2" />
+                  NIPs
                 </Link>
               </Button>
               <Button variant="ghost" asChild className="text-foreground hover:bg-primary/10 hover:text-primary transition-all duration-300">
@@ -91,15 +91,15 @@ export function Layout({ children }: LayoutProps) {
                     {/* Navigation Links */}
                     <nav className="flex flex-col space-y-4">
                       <Button variant="ghost" asChild className="justify-start text-foreground hover:bg-primary/10 hover:text-primary transition-all duration-300">
-                        <Link to="/create">
-                          <Plus className="h-4 w-4 mr-3" />
-                          Create NIP
+                        <Link to="/nips">
+                          <Zap className="h-4 w-4 mr-3" />
+                          NIPs
                         </Link>
                       </Button>
                       <Button variant="ghost" asChild className="justify-start text-foreground hover:bg-primary/10 hover:text-primary transition-all duration-300">
-                        <Link to="/community">
-                          <Users className="h-4 w-4 mr-3" />
-                          Community
+                        <Link to="/create">
+                          <Plus className="h-4 w-4 mr-3" />
+                          Create NIP
                         </Link>
                       </Button>
                       <Button variant="ghost" asChild className="justify-start text-foreground hover:bg-primary/10 hover:text-primary transition-all duration-300">

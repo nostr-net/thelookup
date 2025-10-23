@@ -209,7 +209,8 @@ const defaultConfig: AppConfig = {
 ```
 
 ### URL Structure
-- `/` - Home with official NIPs carousel
+- `/` - Apps page (default homepage)
+- `/nips` - Official NIPs browser with carousel
 - `/nip/01` - View official NIP-01
 - `/nip/naddr1...` - View custom NIP by naddr
 - `/create` - Create new custom NIP

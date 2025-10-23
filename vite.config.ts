@@ -22,9 +22,9 @@ export default defineConfig(() => ({
     process.env.PRERENDER ? prerender({
       routes: [
         "/",
+        "/nips",
         "/apps",
         "/apps/submit",
-        "/community",
         "/repositories",
         "/repositories/create",
         "/create",
