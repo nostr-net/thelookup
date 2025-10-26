@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { nip19 } from 'nostr-tools';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
@@ -12,6 +12,8 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/useToast';
 import { GitBranch, Plus, X, Globe, Copy, Users, Zap } from 'lucide-react';
+import { parseRepositoryEvent } from '@/lib/repository';
+import type { NostrEvent } from '@nostrify/nostrify';
 
 interface FormData {
   id: string;
@@ -25,24 +27,68 @@ interface FormData {
   earliestCommit: string;
 }
 
-export function AnnounceRepositoryForm() {
+interface RepositoryData {
+  event: NostrEvent;
+  data: ReturnType<typeof parseRepositoryEvent>;
+}
+
+interface AnnounceRepositoryFormProps {
+  repository?: RepositoryData;
+}
+
+export function AnnounceRepositoryForm({ repository }: AnnounceRepositoryFormProps = {}) {
   const navigate = useNavigate();
   const { user } = useCurrentUser();
   const { mutate: publishEvent, isPending } = useNostrPublish();
   const { toast } = useToast();
   const { config } = useAppConfig();
 
-  const [formData, setFormData] = useState<FormData>({
-    id: '',
-    name: '',
-    description: '',
-    web: [],
-    clone: [],
-    relays: [],
-    maintainers: [],
-    tags: [],
-    earliestCommit: '',
+  const [formData, setFormData] = useState<FormData>(() => {
+    if (repository && repository.data) {
+      const repo = repository.data;
+      return {
+        id: repo.id || '',
+        name: repo.name || '',
+        description: repo.description || '',
+        web: repo.web || [],
+        clone: repo.clone || [],
+        relays: repo.relays || [],
+        maintainers: repo.maintainers || [],
+        tags: repo.tags || [],
+        earliestCommit: repo.earliest_commit || '',
+      };
+    }
+
+    return {
+      id: '',
+      name: '',
+      description: '',
+      web: [],
+      clone: [],
+      relays: [],
+      maintainers: [],
+      tags: [],
+      earliestCommit: '',
+    };
   });
+
+  // Update form data when repository data loads
+  useEffect(() => {
+    if (repository && repository.data) {
+      const repo = repository.data;
+      setFormData({
+        id: repo.id || '',
+        name: repo.name || '',
+        description: repo.description || '',
+        web: repo.web || [],
+        clone: repo.clone || [],
+        relays: repo.relays || [],
+        maintainers: repo.maintainers || [],
+        tags: repo.tags || [],
+        earliestCommit: repo.earliest_commit || '',
+      });
+    }
+  }, [repository]);
 
   const [newInputs, setNewInputs] = useState({
     web: '',
@@ -188,7 +234,7 @@ export function AnnounceRepositoryForm() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <GitBranch className="h-5 w-5" />
-          Add Repository
+          {repository ? 'Edit Repository' : 'Add Repository'}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -466,7 +512,7 @@ export function AnnounceRepositoryForm() {
           </details>
 
           <Button type="submit" disabled={isPending || !formData.id.trim()} className="w-full">
-            {isPending ? 'Adding...' : 'Add Repository'}
+            {isPending ? (repository ? 'Updating...' : 'Adding...') : (repository ? 'Update Repository' : 'Add Repository')}
           </Button>
         </form>
       </CardContent>

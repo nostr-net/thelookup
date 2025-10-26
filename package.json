@@ -1,5 +1,5 @@
 {
-  "name": "nostrhub",
+  "name": "thelookup",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -10,6 +10,7 @@
     "deploy": "npm run build && npx -y surge@latest dist"
   },
   "dependencies": {
+    "@getalby/sdk": "^6.0.2",
     "@hookform/resolvers": "^3.10.0",
     "@isomorphic-git/lightning-fs": "^4.6.2",
     "@nostrify/nostrify": "npm:@jsr/nostrify__nostrify@^0.46.5",
@@ -49,6 +50,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
+    "culori": "^4.0.2",
     "date-fns": "^3.6.0",
     "embla-carousel-react": "^8.6.0",
     "input-otp": "^1.4.2",
@@ -57,6 +59,7 @@
     "nostr-tools": "^2.17.0",
     "prismjs": "^1.30.0",
     "process": "^0.11.10",
+    "qrcode": "^1.5.4",
     "react": "^18.3.1",
     "react-day-picker": "^8.10.1",
     "react-dom": "^18.3.1",

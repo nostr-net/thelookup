@@ -2,6 +2,7 @@ import { useParams, Link } from 'react-router-dom';
 import { nip19 } from 'nostr-tools';
 import { useSeoMeta } from '@unhead/react';
 import { Layout } from '@/components/Layout';
+import { getPageTitle, getPageDescription } from '@/lib/siteConfig';
 import { usePatch, usePatchComments } from '@/hooks/useRepositories';
 import { useAuthor } from '@/hooks/useAuthor';
 import { genUserName } from '@/lib/genUserName';
@@ -47,8 +48,8 @@ export default function PatchPage() {
   const isRootPatch = patch?.tags.some(tag => tag[0] === 't' && tag[1] === 'root');
 
   useSeoMeta({
-    title: subject ? `${subject} | Patch | NostrHub` : 'Patch | NostrHub',
-    description: subject ? `Patch: ${subject} by ${authorName} on NostrHub.` : `Patch by ${authorName} on NostrHub.`,
+    title: subject ? getPageTitle(`${subject} | Patch`) : getPageTitle('Patch'),
+    description: getPageDescription('patch', { subject, authorName }),
   });
 
   if (!decoded) {

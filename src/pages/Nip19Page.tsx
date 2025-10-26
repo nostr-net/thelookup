@@ -1,6 +1,7 @@
 import { useParams } from 'react-router-dom';
 import { nip19 } from 'nostr-tools';
 import { useSeoMeta } from '@unhead/react';
+import { getPageTitle, getPageDescription } from '@/lib/siteConfig';
 
 import NipPage from './NipPage';
 import AuthorPage from './AuthorPage';
@@ -13,8 +14,8 @@ export default function Nip19Page() {
   const { nip19: nip19Param } = useParams<{ nip19: string }>();
   
   useSeoMeta({
-    title: 'Nostr Content | NostrHub',
-    description: 'View Nostr content including NIPs, profiles, events, and more on NostrHub.',
+    title: getPageTitle('Nostr Content'),
+    description: getPageDescription('nip19'),
   });
   
   if (!nip19Param) {

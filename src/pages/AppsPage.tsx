@@ -1,16 +1,21 @@
 import { useSeoMeta } from '@unhead/react';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Layout } from '@/components/Layout';
+import { FeaturedApps } from '@/components/FeaturedApps';
 import { useApps } from '@/hooks/useApps';
 import { AppCard } from '@/components/AppCard';
 import { AppCardSkeleton } from '@/components/AppCardSkeleton';
+import { AppListItem } from '@/components/AppListItem';
 import { RelaySelector } from '@/components/RelaySelector';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Search, Smartphone, Globe, Zap, Plus } from 'lucide-react';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Search, Smartphone, Globe, Zap, Plus, Grid3x3, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
+import { getPageTitle, getPageDescription } from '@/lib/siteConfig';
 
 const POPULAR_KINDS = [
   { kind: 1, name: 'Text Notes', icon: '📝' },
@@ -24,28 +29,37 @@ const POPULAR_KINDS = [
 
 export default function AppsPage() {
   useSeoMeta({
-    title: 'Nostr Apps | NostrHub',
-    description: 'Discover applications that can handle different types of Nostr events. Find the perfect app for your needs.',
+    title: getPageTitle('Nostr Apps'),
+    description: getPageDescription('Discover applications that can handle different types of Nostr events. Find the perfect app for your needs.'),
   });
 
   const { data: apps, isLoading, error } = useApps();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedKind, setSelectedKind] = useState<number | null>(null);
+  const [viewMode, setViewMode] = useState<'cards' | 'list'>('list');
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
-  // Filter apps based on search term and selected kind
+  // Get all unique tags from apps
+  const allTags = useMemo(() => {
+    const tags = apps?.flatMap(app => app.tags || []) || [];
+    return Array.from(new Set(tags)).sort();
+  }, [apps]);
+
+  // Filter apps based on search term, selected kind, and selected tag
   const filteredApps = apps?.filter(app => {
-    const matchesSearch = !searchTerm || 
+    const matchesSearch = !searchTerm ||
       app.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       app.about?.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     const matchesKind = !selectedKind || app.supportedKinds.includes(selectedKind);
+    const matchesTag = !selectedTag || app.tags?.includes(selectedTag);
 
     if (!app.name || !app.picture || !app.about || !app.website) {
       // If app is missing essential fields, skip it
       return false;
     }
-    
-    return matchesSearch && matchesKind;
+
+    return matchesSearch && matchesKind && matchesTag;
   }) || [];
 
   const totalApps = filteredApps.length;
@@ -62,11 +76,10 @@ export default function AppsPage() {
                 <Smartphone className="h-8 w-8 text-primary" />
                 <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl"></div>
               </div>
-              <h1 className="text-3xl sm:text-4xl font-bold gradient-text">Nostr Apps</h1>
+              <h1 className="text-3xl sm:text-4xl font-bold title-shadow">Nostr Apps</h1>
             </div>
             <p className="text-muted-foreground max-w-2xl mx-auto">
               Discover applications that can handle different types of Nostr events. 
-              Find the perfect app for your needs.
             </p>
             
             {/* Stats and Submit Button */}
@@ -90,6 +103,16 @@ export default function AppsPage() {
             </div>
           </div>
 
+          {/* Featured Apps Section */}
+          <div className="mt-8">
+            <FeaturedApps 
+              title="Featured Apps"
+              subtitle=""
+              titleAlignment="left"
+              className="space-y-4 sm:space-y-6"
+            />
+          </div>
+
           {/* Search and Filters */}
           <Card className="sm:rounded-lg rounded-none">
             <CardHeader>
@@ -107,37 +130,83 @@ export default function AppsPage() {
                 />
               </div>
               
-              {/* Popular Event Types Filter */}
-              <div className="space-y-2">
-                <h3 className="text-sm font-medium">Filter by Event Type</h3>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    variant={selectedKind === null ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setSelectedKind(null)}
+              {/* Filters */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Popular Event Types Filter */}
+                <div className="space-y-2">
+                  <h3 className="text-sm font-medium">Filter by Event Type</h3>
+                  <Select
+                    value={selectedKind?.toString() || "all"}
+                    onValueChange={(value) => setSelectedKind(value === "all" ? null : parseInt(value))}
                   >
-                    All Types
-                  </Button>
-                  {POPULAR_KINDS.map(({ kind, name, icon }) => {
-                    const appCount = filteredApps.filter(app => app.supportedKinds.includes(kind)).length || 0;
-                    if (appCount === 0) return null;
-                    
-                    return (
-                      <Button
-                        key={kind}
-                        variant={selectedKind === kind ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setSelectedKind(selectedKind === kind ? null : kind)}
-                        className="space-x-1"
-                      >
-                        <span>{icon}</span>
-                        <span>{name}</span>
-                        <Badge variant="secondary" className="ml-1 text-xs">
-                          {appCount}
-                        </Badge>
-                      </Button>
-                    );
-                  })}
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select event type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">
+                        <div className="flex items-center gap-2">
+                          <span>All Types</span>
+                          <Badge variant="secondary" className="ml-auto text-xs">
+                            {filteredApps.length}
+                          </Badge>
+                        </div>
+                      </SelectItem>
+                      {POPULAR_KINDS.map(({ kind, name, icon }) => {
+                        const appCount = filteredApps.filter(app => app.supportedKinds.includes(kind)).length || 0;
+                        if (appCount === 0) return null;
+
+                        return (
+                          <SelectItem key={kind} value={kind.toString()}>
+                            <div className="flex items-center gap-2">
+                              <span>{icon}</span>
+                              <span>{name}</span>
+                              <Badge variant="secondary" className="ml-auto text-xs">
+                                {appCount}
+                              </Badge>
+                            </div>
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Filter by Tags */}
+                <div className="space-y-2">
+                  <h3 className="text-sm font-medium">Filter by Tags</h3>
+                  <Select
+                    value={selectedTag || "all"}
+                    onValueChange={(value) => setSelectedTag(value === "all" ? null : value)}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select tag" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">
+                        <div className="flex items-center gap-2">
+                          <span>All Tags</span>
+                          <Badge variant="secondary" className="ml-auto text-xs">
+                            {filteredApps.length}
+                          </Badge>
+                        </div>
+                      </SelectItem>
+                      {allTags.map(tag => {
+                        const appCount = filteredApps.filter(app => app.tags?.includes(tag)).length || 0;
+                        if (appCount === 0) return null;
+
+                        return (
+                          <SelectItem key={tag} value={tag}>
+                            <div className="flex items-center gap-2">
+                              <span>{tag}</span>
+                              <Badge variant="secondary" className="ml-auto text-xs">
+                                {appCount}
+                              </Badge>
+                            </div>
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </CardContent>
@@ -169,29 +238,58 @@ export default function AppsPage() {
           </div>
         )}
 
-        {/* Apps Grid */}
+        {/* Apps Display */}
         {!isLoading && !error && (
           <>
             {filteredApps.length > 0 ? (
               <>
-                <div className="flex items-center justify-between mt-6 px-4 sm:px-0">
-                  <h2 className="text-xl font-semibold">
-                    {selectedKind ? (
-                      <>Apps for {POPULAR_KINDS.find(k => k.kind === selectedKind)?.name || `Kind ${selectedKind}`}</>
-                    ) : (
-                      'All Apps'
-                    )}
-                  </h2>
-                  <span className="text-sm text-muted-foreground">
-                    {filteredApps.length} {filteredApps.length === 1 ? 'app' : 'apps'}
-                  </span>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-6 px-4 sm:px-0">
+                  <div>
+                    <h2 className="text-xl font-semibold">
+                      {selectedKind ? (
+                        <>Apps for {POPULAR_KINDS.find(k => k.kind === selectedKind)?.name || `Kind ${selectedKind}`}</>
+                      ) : (
+                        'All Apps'
+                      )}
+                    </h2>
+                    <span className="text-sm text-muted-foreground mt-1">
+                      {filteredApps.length} {filteredApps.length === 1 ? 'app' : 'apps'}
+                    </span>
+                  </div>
+
+                  {/* View Mode Toggle */}
+                  <ToggleGroup
+                    type="single"
+                    value={viewMode}
+                    onValueChange={(value) => setViewMode(value as 'cards' | 'list')}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <ToggleGroupItem value="list" aria-label="List view">
+                      <List className="h-4 w-4" />
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="cards" aria-label="Card view">
+                      <Grid3x3 className="h-4 w-4" />
+                    </ToggleGroupItem>
+                  </ToggleGroup>
                 </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 mt-6">
-                  {filteredApps.map((app) => (
-                    <AppCard key={app.id} app={app} className="sm:rounded-lg rounded-none" />
-                  ))}
-                </div>
+
+                {/* Conditional Rendering based on viewMode */}
+                {viewMode === 'cards' ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 mt-6">
+                    {filteredApps.map((app) => (
+                      <AppCard key={app.id} app={app} className="sm:rounded-lg rounded-none" />
+                    ))}
+                  </div>
+                ) : (
+                  <Card className="sm:rounded-lg rounded-none mt-6">
+                    <div className="divide-y">
+                      {filteredApps.map((app) => (
+                        <AppListItem key={app.id} app={app} />
+                      ))}
+                    </div>
+                  </Card>
+                )}
               </>
             ) : (
               <div className="mt-6">
@@ -202,7 +300,7 @@ export default function AppsPage() {
                         <Globe className="h-12 w-12 text-muted-foreground mx-auto" />
                         <h3 className="text-lg font-medium">No Apps Found</h3>
                         <p className="text-muted-foreground">
-                          {searchTerm || selectedKind 
+                          {searchTerm || selectedKind
                             ? 'No apps match your current filters. Try adjusting your search or filters.'
                             : 'No apps found on this relay. Try switching to a different relay to discover apps.'
                           }

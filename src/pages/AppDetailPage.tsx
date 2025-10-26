@@ -3,9 +3,11 @@ import { useSeoMeta } from '@unhead/react';
 import { nip19 } from 'nostr-tools';
 import { useState } from 'react';
 import { Layout } from '@/components/Layout';
+import { getPageTitle, getPageDescription } from '@/lib/siteConfig';
 import { useApp } from '@/hooks/useApp';
 import { useAuthor } from '@/hooks/useAuthor';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { useAppFlags } from '@/hooks/useAppFlags';
 import { genUserName } from '@/lib/genUserName';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,20 +15,22 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { RelaySelector } from '@/components/RelaySelector';
-import { CommentsSection } from '@/components/CommentsSection';
-import { 
-  ExternalLink, 
-  Globe, 
-  Smartphone, 
-  Monitor, 
-  User, 
+import { FlagDialog } from '@/components/FlagDialog';
+import { FlagStats } from '@/components/FlagStats';
+import {
+  ExternalLink,
+  Globe,
+  Smartphone,
+  Monitor,
+  User,
   Calendar,
   Edit,
   ArrowLeft,
   Zap,
   Download,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  AlertTriangle
 } from 'lucide-react';
 import NotFound from './NotFound';
 
@@ -58,10 +62,13 @@ export default function AppDetailPage() {
   const author = useAuthor(app?.pubkey || '');
   const authorMetadata = author.data?.metadata;
 
+  // Get flagging data for this app
+  const { flagStats, canFlag, userFlag, isLoading: isFlagsLoading } = useAppFlags(app?.id || '', app?.pubkey || '');
+
   // Set SEO meta
   useSeoMeta({
-    title: app ? `${app.name || 'Nostr App'} | NostrHub` : 'App Details | NostrHub',
-    description: app?.about || 'View details about this Nostr application and its supported event types.',
+    title: app ? getPageTitle(app.name || 'Nostr App') : getPageTitle('App Details'),
+    description: getPageDescription('app', { appName: app?.name || 'this app' }),
   });
   
   if (!nip19Param) {
@@ -202,14 +209,31 @@ export default function AppDetailPage() {
                   )}
                   
                   {/* App Metadata */}
-                  <div className="flex items-center space-x-4 mt-4 text-sm text-muted-foreground">
-                    <div className="flex items-center space-x-1">
-                      <Calendar className="h-4 w-4" />
-                      <span>Added {new Date(app.createdAt * 1000).toLocaleDateString()}</span>
+                  <div className="flex items-center justify-between mt-4 text-sm text-muted-foreground">
+                    <div className="flex items-center space-x-4">
+                      <div className="flex items-center space-x-1">
+                        <Calendar className="h-4 w-4" />
+                        <span>Added {new Date(app.createdAt * 1000).toLocaleDateString()}</span>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <Zap className="h-4 w-4" />
+                        <span>{app.supportedKinds.length} event types</span>
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-1">
-                      <Zap className="h-4 w-4" />
-                      <span>{app.supportedKinds.length} event types</span>
+
+                    {/* Flag Button */}
+                    <div className="ml-6">
+                      <FlagDialog app={app}>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={!canFlag}
+                          className="text-xs border-yellow-500 text-yellow-600 hover:bg-yellow-50 hover:text-yellow-700 hover:border-yellow-600 dark:text-yellow-500 dark:border-yellow-600 dark:hover:bg-yellow-950 dark:hover:text-yellow-400 dark:hover:border-yellow-500"
+                        >
+                          <AlertTriangle className="h-3 w-3 mr-1" />
+                          {userFlag ? 'Flagged' : 'Flag'}
+                        </Button>
+                      </FlagDialog>
                     </div>
                   </div>
                 </div>
@@ -227,6 +251,23 @@ export default function AppDetailPage() {
             </div>
           </CardHeader>
         </Card>
+
+        {/* Flag Stats Section */}
+        {flagStats.total > 0 && (
+          <Card className="mb-6 border-yellow-200 bg-yellow-50/50">
+            <CardContent className="py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-yellow-600" />
+                  <span className="font-medium text-yellow-800">
+                    This app has been flagged {flagStats.total} {flagStats.total === 1 ? 'time' : 'times'}
+                  </span>
+                </div>
+                <FlagStats flagStats={flagStats} canFlag={canFlag} />
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:items-stretch">
           {/* Main Content */}
@@ -437,16 +478,6 @@ export default function AppDetailPage() {
               </CardContent>
             </Card>
           </div>
-        </div>
-
-        {/* Comments Section */}
-        <div className="mt-8">
-          <CommentsSection 
-            root={app.event}
-            title="App Discussion"
-            emptyStateMessage="No comments yet"
-            emptyStateSubtitle="Share your experience with this app or ask questions!"
-          />
         </div>
       </div>
     </Layout>

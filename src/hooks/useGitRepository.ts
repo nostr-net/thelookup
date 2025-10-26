@@ -99,6 +99,11 @@ export function useGitRepository(repoId: string, cloneUrl?: string) {
       return false;
     }
 
+    // Check if this is a GitHub URL (which often has CORS issues)
+    if (cloneUrl.includes('github.com')) {
+      console.log('Attempting to clone GitHub repository (may have CORS restrictions):', cloneUrl);
+    }
+
     setState(prev => ({
       ...prev,
       isCloning: true,
@@ -158,10 +163,25 @@ export function useGitRepository(repoId: string, cloneUrl?: string) {
       return true;
     } catch (error) {
       console.error('Clone error:', error);
+      let errorMessage = 'Failed to clone repository';
+
+      if (error instanceof Error) {
+        // Check for common GitHub/CORS errors
+        if (error.message.includes('CORS') || error.message.includes('cross-origin')) {
+          errorMessage = 'GitHub repositories cannot be cloned directly from the browser due to CORS restrictions. Try using a different Git hosting service or check the repository URL.';
+        } else if (error.message.includes('404') || error.message.includes('not found')) {
+          errorMessage = 'Repository not found. Please check the URL and ensure the repository is accessible.';
+        } else if (error.message.includes('403') || error.message.includes('401')) {
+          errorMessage = 'Repository access denied. Please check if the repository is public or if authentication is required.';
+        } else {
+          errorMessage = `Cloning failed: ${error.message}`;
+        }
+      }
+
       setState(prev => ({
         ...prev,
         isCloning: false,
-        error: error instanceof Error ? error.message : 'Failed to clone repository'
+        error: errorMessage
       }));
       return false;
     }

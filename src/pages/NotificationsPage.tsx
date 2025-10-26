@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ArrowLeft, Bell, AlertCircle, CheckCheck } from 'lucide-react';
+import { getPageTitle, getPageDescription } from '@/lib/siteConfig';
 
 export default function NotificationsPage() {
   const { user } = useCurrentUser();
@@ -17,8 +18,8 @@ export default function NotificationsPage() {
   const { markAllAsRead, getUnreadCount } = useNotificationReadState();
 
   useSeoMeta({
-    title: 'Notifications | NostrHub',
-    description: 'View your notifications for reactions, comments, and forks on your custom NIPs and other Nostr content.',
+    title: getPageTitle('Notifications'),
+    description: getPageDescription('View your notifications for reactions, comments, and forks on your custom NIPs and other Nostr content'),
   });
 
   const unreadCount = notifications ? getUnreadCount(notifications.map(n => n.id)) : 0;

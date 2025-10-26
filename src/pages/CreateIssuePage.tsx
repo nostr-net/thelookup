@@ -3,6 +3,7 @@ import { nip19 } from 'nostr-tools';
 import { useSeoMeta } from '@unhead/react';
 import { useAppConfig } from '@/components/AppProvider';
 import { Layout } from '@/components/Layout';
+import { getPageTitle, getPageDescription } from '@/lib/siteConfig';
 import { CreateIssueForm } from '@/components/CreateIssueForm';
 import { useRepository } from '@/hooks/useRepositories';
 import { parseRepositoryEvent, getRepositoryDisplayName } from '@/lib/repository';
@@ -23,8 +24,8 @@ export default function CreateIssuePage() {
   const { config } = useAppConfig();
 
   useSeoMeta({
-    title: 'Create Issue | NostrHub',
-    description: 'Create a new issue for a git repository.',
+    title: getPageTitle('Create Issue'),
+    description: getPageDescription('create-issue'),
   });
 
   // Decode naddr to get pubkey and identifier

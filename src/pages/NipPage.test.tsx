@@ -63,11 +63,6 @@ vi.mock('@/hooks/useOfficialNip', () => ({
   }),
 }));
 
-vi.mock('@/components/OfficialNipCommentsSection', () => ({
-  OfficialNipCommentsSection: ({ nipNumber }: { nipNumber: string }) => (
-    <div>Comments for NIP {nipNumber}</div>
-  ),
-}));
 
 vi.mock('@/hooks/useAuthor', () => ({
   useAuthor: () => ({

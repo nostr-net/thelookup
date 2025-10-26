@@ -14,11 +14,12 @@ import { useSeoMeta } from '@unhead/react';
 import { AlertTriangle, BookOpen, Plus, Search, Users } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { getPageTitle, getPageDescription } from '@/lib/siteConfig';
 
 const Index = () => {
   useSeoMeta({
-    title: 'NostrHub | Discover and Publish NIPs',
-    description: 'Explore official NIPs and publish your own custom NIPs on NostrHub.',
+    title: getPageTitle('Discover and Publish NIPs'),
+    description: getPageDescription('Explore official NIPs and publish your own custom NIPs'),
   });
 
   const navigate = useNavigate();
@@ -100,8 +101,8 @@ const Index = () => {
         {/* Hero Section */}
         <div className="text-center space-y-6 sm:space-y-8">
           <div className="space-y-4">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold gradient-text mb-4 leading-tight">
-              NostrHub
+            <h1 className="text-3xl sm:text-4xl font-bold gradient-text mb-4 leading-tight">
+              Nostr Implementation Possibilities
             </h1>
             <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed px-4">
               Discover{' '}
@@ -177,8 +178,9 @@ const Index = () => {
                 opts={{
                   align: 'start',
                   loop: false,
-                  dragFree: true,
-                  containScroll: false,
+                  dragFree: false,
+                  containScroll: 'trimSnaps',
+                  skipSnaps: false,
                 }}
                 setApi={setCarouselApi}
                 className="w-full"
@@ -194,7 +196,7 @@ const Index = () => {
                           <CardContent className="p-4 flex flex-col justify-between h-full">
                             <div className="flex flex-col justify-between h-full">
                               <div>
-                                <h3 className="font-semibold text-primary group-hover:text-accent transition-colors">
+                                <h3 className="font-semibold text-purple-600 dark:text-purple-400 group-hover:text-accent transition-colors">
                                   NIP-{nip.number}
                                 </h3>
                                 <p className="text-sm text-muted-foreground group-hover:text-foreground/80 transition-colors line-clamp-2">
@@ -209,7 +211,7 @@ const Index = () => {
                                       <Badge
                                         key={eventKind.kind}
                                         variant="secondary"
-                                        className="text-xs bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 transition-colors cursor-pointer"
+                                        className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 border-purple-300 dark:border-purple-700 hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors cursor-pointer"
                                         onClick={(e) => {
                                           e.preventDefault();
                                           e.stopPropagation();
@@ -267,9 +269,10 @@ const Index = () => {
               </div>
               <h2 className="text-2xl sm:text-3xl font-bold gradient-text">Custom NIPs</h2>
             </div>
-            <Button asChild size="icon" variant="outline">
+            <Button asChild className="bg-purple-600 hover:bg-purple-700 text-white border-purple-600">
               <Link to="/create">
-                <Plus className="h-4 w-4" />
+                <Plus className="h-4 w-4 mr-2" />
+                Create NIP
               </Link>
             </Button>
           </div>

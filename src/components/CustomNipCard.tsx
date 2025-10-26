@@ -128,11 +128,11 @@ export function CustomNipCard({
         <CardContent className="p-3 sm:p-4 card-content h-full flex flex-col">
           <div className="space-y-2 sm:space-y-3 flex flex-col h-full">
             <div className="flex items-start justify-between gap-2">
-              <h3 className="font-semibold text-accent group-hover:text-primary transition-colors text-sm sm:text-base leading-tight flex-1 min-w-0">
+              <h3 className="font-semibold text-purple-700 dark:text-accent group-hover:text-primary transition-colors text-sm sm:text-base leading-tight flex-1 min-w-0">
                 {title}
               </h3>
               <div className="flex items-center gap-2 flex-shrink-0">
-                <Badge variant="outline" className="bg-accent/10 text-accent border-accent/20 text-xs">
+                <Badge variant="outline" className="bg-purple-100 text-purple-700 dark:bg-accent/10 dark:text-accent border-purple-300 dark:border-accent/20 text-xs">
                   Custom
                 </Badge>
                 {isForked && (

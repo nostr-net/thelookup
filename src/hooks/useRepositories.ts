@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNostr } from '@nostrify/react';
 import type { NostrEvent, NostrSigner } from '@nostrify/nostrify';
+import { getClientTag } from '@/lib/siteConfig';
 
 /**
  * Validates a NIP-34 repository announcement event
@@ -114,7 +115,7 @@ export function useCreateIssue() {
         ['a', `30617:${repositoryPubkey}:${repositoryId}`],
         ['p', repositoryPubkey],
         ['subject', subject],
-        ['client', 'nostrhub.io'], // Add client tag
+        ['client', getClientTag()], // Add client tag
       ];
 
       // Add label tags

@@ -38,7 +38,8 @@ const NostrProvider: React.FC<NostrProviderProps> = (props) => {
         return new Map([[relayUrl.current, filters]]);
       },
       eventRouter(_event: NostrEvent) {
-        return available.current.map((info) => info.url);
+        // Send events only to the currently selected relay
+        return [relayUrl.current];
       },
     });
   }

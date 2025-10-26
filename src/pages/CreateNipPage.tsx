@@ -20,6 +20,7 @@ import { ArrowLeft, AlertCircle, Save, GitFork, X } from 'lucide-react';
 import { useToast } from '@/hooks/useToast';
 import { nip19 } from 'nostr-tools';
 import { slugify } from '@/lib/utils';
+import { getPageTitle, getPageDescription } from '@/lib/siteConfig';
 
 export default function CreateNipPage() {
   const { toast } = useToast();
@@ -30,8 +31,8 @@ export default function CreateNipPage() {
   const { config } = useAppConfig();
 
   useSeoMeta({
-    title: 'Create Custom NIP | NostrHub',
-    description: 'Create your own custom Nostr Implementation Possibility (NIP). Define new event kinds, protocols, and specifications for the Nostr ecosystem.',
+    title: getPageTitle('Create Custom NIP'),
+    description: getPageDescription('Create your own custom Nostr Implementation Possibility (NIP). Define new event kinds, protocols, and specifications for the Nostr ecosystem'),
   });
 
   // Get fork parameters from URL
@@ -144,6 +145,9 @@ export default function CreateNipPage() {
       // Note: We don't add "p" tags for official NIPs as requested
     }
 
+    console.log('Publishing NIP with tags:', tags);
+    console.log('NIP content:', content.trim());
+
     publishEvent(
       {
         kind: 30817,
@@ -152,6 +156,7 @@ export default function CreateNipPage() {
       },
       {
         onSuccess: (event) => {
+          console.log('NIP published successfully:', event);
           const naddr = nip19.naddrEncode({
             identifier: identifier.trim(),
             pubkey: event.pubkey,
@@ -164,6 +169,7 @@ export default function CreateNipPage() {
           navigate(`/${naddr}`);
         },
         onError: (error) => {
+          console.error('Failed to publish NIP:', error);
           toast({
             title: 'Failed to publish NIP',
             description: error.message,

@@ -39,15 +39,22 @@ export function useUpdateNip() {
         ...forkTags, // Preserve fork markers
       ];
 
+      console.log('Publishing updated NIP with tags:', tags);
+      console.log('Original event created_at:', originalEvent.created_at);
+      console.log('Using current timestamp instead of original for better relay compatibility');
+
       const newEvent = await publishEvent({
         kind: 30817,
         content: content.trim(),
         tags,
+        // Remove created_at override - let it use current timestamp like create events do
       });
 
       return newEvent;
     },
     onSuccess: (newEvent) => {
+      console.log('Updated NIP event:', newEvent);
+
       // Create the naddr for the updated NIP
       const newNaddr = nip19.naddrEncode({
         identifier: newEvent.tags.find(tag => tag[0] === 'd')?.[1] || '',
@@ -55,6 +62,8 @@ export function useUpdateNip() {
         kind: newEvent.kind,
         relays: [config.relayUrl],
       });
+
+      console.log('Invalidating queries for updated NIP...');
 
       // Invalidate all relevant queries to refresh the UI
       queryClient.invalidateQueries({ queryKey: ['custom-nip'] });
@@ -65,6 +74,8 @@ export function useUpdateNip() {
 
       // Also invalidate the specific NIP query
       queryClient.invalidateQueries({ queryKey: ['custom-nip', newNaddr] });
+
+      console.log('Queries invalidated for NIP update');
     },
     onError: (error) => {
       console.error('Failed to update NIP:', error);

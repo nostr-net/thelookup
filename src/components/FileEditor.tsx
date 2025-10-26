@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { getSiteDisplayName } from '@/lib/siteConfig';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -111,7 +112,7 @@ const generatePatch = (filePath: string, originalContent: string, newContent: st
 
   // Simple unified diff generation
   const patch = [
-    `From: NostrHub File Editor`,
+    `From: ${getSiteDisplayName()} File Editor`,
     `Date: ${new Date().toISOString()}`,
     `Subject: [PATCH] ${commitMessage}`,
     ``,

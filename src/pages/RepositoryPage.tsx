@@ -4,6 +4,7 @@ import { nip19 } from 'nostr-tools';
 import type { NostrEvent } from '@nostrify/nostrify';
 import { useSeoMeta } from '@unhead/react';
 import { Layout } from '@/components/Layout';
+import { getPageTitle, getPageDescription } from '@/lib/siteConfig';
 import { useRepository, useRepositoryState, useRepositoryPatches, useRepositoryIssues } from '@/hooks/useRepositories';
 import { useIssueStatus } from '@/hooks/useIssueStatus';
 import { useGitRepository } from '@/hooks/useGitRepository';
@@ -21,14 +22,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 
 import { MarkdownRenderer } from '@/components/MarkdownRenderer';
-import { GitBranch, Globe, Copy, GitPullRequest, AlertCircle, Plus, MessageSquare, Code, BookOpen, ChevronDown, MoreHorizontal, CheckCircle, XCircle, FileText } from 'lucide-react';
+import { GitBranch, Globe, Copy, GitPullRequest, AlertCircle, Plus, Code, BookOpen, ChevronDown, MoreHorizontal, CheckCircle, XCircle, FileText } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useToast } from '@/hooks/useToast';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { Link } from 'react-router-dom';
-import { CommentsSection } from '@/components/CommentsSection';
 import { SubmitPatchDialog } from '@/components/SubmitPatchDialog';
 import { GitFileBrowser } from '@/components/GitFileBrowser';
+import { GitHubReadmeDisplay } from '@/components/GitHubReadmeDisplay';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 // Component for displaying a single contributor
@@ -177,11 +178,25 @@ export default function RepositoryPage() {
   const { user } = useCurrentUser();
 
   const repoData = repository ? parseRepositoryEvent(repository) : null;
+  const cloneUrl = repoData?.clone?.[0];
+  const isGitHubRepo = cloneUrl?.includes('github.com');
   const authorName = author.data?.metadata?.name ?? genUserName(repository?.pubkey || '');
 
+  // Debug logging to understand repository data
+  console.log('Repository Debug Info:', {
+    repoName: repoData?.id || decoded?.identifier,
+    cloneUrls: repoData?.clone,
+    isGitHubRepo,
+    cloneUrl
+  });
+
   useSeoMeta({
-    title: repoData ? `${getRepositoryDisplayName(repoData)} | Repository | NostrHub` : 'Repository | NostrHub',
-    description: repoData?.description ? `${repoData.description} - Git repository by ${authorName} on NostrHub.` : `Git repository by ${authorName} on NostrHub. Browse code, submit patches, and report issues.`,
+    title: repoData ? getPageTitle(`${getRepositoryDisplayName(repoData)} | Repository`) : getPageTitle('Repository'),
+    description: getPageDescription('repository', {
+      repoName: repoData ? getRepositoryDisplayName(repoData) : 'this repository',
+      description: repoData?.description,
+      authorName
+    }),
   });
 
   if (!decoded) {
@@ -362,14 +377,7 @@ export default function RepositoryPage() {
                     {rootPatches.length}
                   </Badge>
                 </TabsTrigger>
-                <TabsTrigger
-                  value="discussions"
-                  className="relative h-12 bg-transparent border-0 border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-foreground hover:text-foreground rounded-none px-0 font-medium transition-all duration-200 hidden md:flex"
-                >
-                  <MessageSquare className="h-4 w-4 mr-2" />
-                  Discussions
-                </TabsTrigger>
-              </TabsList>
+                              </TabsList>
 
               {/* Mobile dropdown for additional tabs */}
               <div className="md:hidden">
@@ -387,11 +395,7 @@ export default function RepositoryPage() {
                         {rootPatches.length}
                       </Badge>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setActiveTab("discussions")}>
-                      <MessageSquare className="h-4 w-4 mr-2" />
-                      Discussions
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
+                                      </DropdownMenuContent>
                 </DropdownMenu>
               </div>
             </div>
@@ -464,56 +468,139 @@ export default function RepositoryPage() {
                   )}
                 </div>
 
-                {/* File Browser */}
-                <GitFileBrowser
-                  repoId={repoData?.id || decoded?.identifier || ''}
-                  cloneUrl={repoData?.clone?.[0]}
-                  repositoryNaddr={params.nip19}
-                  repositoryOwnerPubkey={repository.pubkey}
-                />
+                {/* File Browser - Only for accessible repositories */}
+                {(() => {
+                  // Check if this repository has accessible clone URLs
+                  const hasValidCloneUrl = cloneUrl && (
+                    cloneUrl.includes('github.com') ||
+                    cloneUrl.includes('gitlab.com') ||
+                    cloneUrl.includes('codeberg.org') ||
+                    cloneUrl.startsWith('https://') ||
+                    cloneUrl.startsWith('http://')
+                  );
+
+                  if (isGitHubRepo) {
+                    // GitHub repository - show simple info
+                    return (
+                      <div className="border border-border rounded-lg p-4">
+                        <div className="text-center py-4">
+                          <h3 className="font-medium mb-2">GitHub Repository</h3>
+                          <p className="text-sm text-muted-foreground mb-4">
+                            This is a GitHub repository. The README is displayed below.
+                          </p>
+                          <a
+                            href={cloneUrl?.replace('.git', '')}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
+                          >
+                            <Globe className="h-4 w-4" />
+                            View repository on GitHub
+                          </a>
+                        </div>
+                      </div>
+                    );
+                  } else if (hasValidCloneUrl) {
+                    // Try to use GitFileBrowser for other repositories
+                    return (
+                      <GitFileBrowser
+                        repoId={repoData?.id || decoded?.identifier || ''}
+                        cloneUrl={cloneUrl}
+                        repositoryNaddr={params.nip19}
+                        repositoryOwnerPubkey={repository.pubkey}
+                      />
+                    );
+                  } else {
+                    // Repository without accessible clone URLs
+                    return (
+                      <div className="border border-border rounded-lg p-4">
+                        <div className="text-center py-4">
+                          <h3 className="font-medium mb-2">Repository Access Limited</h3>
+                          <p className="text-sm text-muted-foreground mb-4">
+                            This repository doesn't have accessible clone URLs or may have access restrictions.
+                          </p>
+                          {repoData?.web && repoData.web.length > 0 && (
+                            <div className="flex flex-col gap-2">
+                              {repoData.web.map((url, index) => (
+                                <a
+                                  key={index}
+                                  href={url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-2 text-sm text-primary hover:underline mx-auto"
+                                >
+                                  <Globe className="h-4 w-4" />
+                                  {new URL(url).hostname}
+                                </a>
+                              ))}
+                            </div>
+                          )}
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Clone URLs: {repoData?.clone?.length || 0} available
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  }
+                })()}
 
                 {/* README Section */}
-                <div className="border border-border rounded-lg">
-                  <div className="px-4 py-3 border-b border-border bg-muted/30">
-                    <div className="flex items-center gap-2">
-                      <BookOpen className="h-4 w-4" />
-                      <span className="font-medium">{readmeFileName}</span>
+                {isGitHubRepo ? (
+                  <GitHubReadmeDisplay
+                    repositoryUrl={cloneUrl || ''}
+                    repositoryNaddr={params.nip19 || ''}
+                    repositoryOwnerPubkey={repository.pubkey}
+                  />
+                ) : cloneUrl && (cloneUrl.includes('github.com') || cloneUrl.includes('gitlab.com') || cloneUrl.includes('codeberg.org') || cloneUrl.startsWith('https://') || cloneUrl.startsWith('http://')) ? (
+                  <div className="border border-border rounded-lg">
+                    <div className="px-4 py-3 border-b border-border bg-muted/30">
+                      <div className="flex items-center gap-2">
+                        <BookOpen className="h-4 w-4" />
+                        <span className="font-medium">{readmeFileName}</span>
+                      </div>
+                    </div>
+                    <div className="p-6">
+                      {!isCloned ? (
+                        <div className="text-center py-8 text-muted-foreground">
+                          <BookOpen className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                          <p>Loading repository content...</p>
+                          <p className="text-sm mt-2">
+                            If this takes too long, the repository may have access restrictions.
+                            Try refreshing the page or check the repository access.
+                          </p>
+                        </div>
+                      ) : readmeLoading ? (
+                        <div className="space-y-3">
+                          <Skeleton className="h-6 w-3/4" />
+                          <Skeleton className="h-4 w-full" />
+                          <Skeleton className="h-4 w-5/6" />
+                          <Skeleton className="h-4 w-4/5" />
+                        </div>
+                      ) : readmeError || !readmeData ? (
+                        <div className="text-center py-8 text-muted-foreground">
+                          <BookOpen className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                          <p>No README file found</p>
+                          <p className="text-sm mt-1">
+                            Add a README.md file to help others understand your project
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="prose prose-sm max-w-none dark:prose-invert">
+                          {readmeFileName.toLowerCase().endsWith('.md') ? (
+                            <MarkdownRenderer content={readmeData} />
+                          ) : (
+                            <pre className="whitespace-pre-wrap text-sm font-mono bg-muted p-4 rounded-lg overflow-x-auto">
+                              {readmeData}
+                            </pre>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
-                  <div className="p-6">
-                    {!isCloned ? (
-                      <div className="text-center py-8 text-muted-foreground">
-                        <BookOpen className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                        <p>Repository needs to be cloned to view README</p>
-                      </div>
-                    ) : readmeLoading ? (
-                      <div className="space-y-3">
-                        <Skeleton className="h-6 w-3/4" />
-                        <Skeleton className="h-4 w-full" />
-                        <Skeleton className="h-4 w-5/6" />
-                        <Skeleton className="h-4 w-4/5" />
-                      </div>
-                    ) : readmeError || !readmeData ? (
-                      <div className="text-center py-8 text-muted-foreground">
-                        <BookOpen className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                        <p>No README file found</p>
-                        <p className="text-sm mt-1">
-                          Add a README.md file to help others understand your project
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="prose prose-sm max-w-none dark:prose-invert">
-                        {readmeFileName.toLowerCase().endsWith('.md') ? (
-                          <MarkdownRenderer content={readmeData} />
-                        ) : (
-                          <pre className="whitespace-pre-wrap text-sm font-mono bg-muted p-4 rounded-lg overflow-x-auto">
-                            {readmeData}
-                          </pre>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
+                ) : (
+                  // Repository without accessible clone URLs - no README section
+                  null
+                )}
               </div>
 
               {/* Sidebar */}
@@ -705,17 +792,6 @@ export default function RepositoryPage() {
                 })}
               </div>
             )}
-          </TabsContent>
-
-          {/* Discussions Tab Content */}
-          <TabsContent value="discussions" className="mt-0 py-6 space-y-4">
-            <CommentsSection
-              root={repository}
-              title="Discussions"
-              emptyStateMessage="No discussions yet"
-              emptyStateSubtitle="Start a discussion about this repository!"
-              className="border-none"
-            />
           </TabsContent>
         </Tabs>
       </Card>

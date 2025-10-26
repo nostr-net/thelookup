@@ -11,6 +11,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NostrLoginProvider } from '@nostrify/react/login';
 import { AppProvider } from './components/AppProvider';
 import { AnimatedBackground } from './components/AnimatedBackground';
+import { NWCProvider } from './contexts/NWCContext';
 import AppRouter from './AppRouter';
 
 const head = createHead({
@@ -36,13 +37,15 @@ export function App() {
         <QueryClientProvider client={queryClient}>
           <NostrLoginProvider storageKey='nostr:login'>
             <NostrProvider>
-              <TooltipProvider>
-                <AnimatedBackground />
+              <NWCProvider>
+                <TooltipProvider>
+                {/* <AnimatedBackground /> */}
                 <Toaster />
                 <Suspense>
                   <AppRouter />
                 </Suspense>
               </TooltipProvider>
+              </NWCProvider>
             </NostrProvider>
           </NostrLoginProvider>
         </QueryClientProvider>

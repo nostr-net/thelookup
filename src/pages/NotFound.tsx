@@ -1,13 +1,14 @@
 import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { useSeoMeta } from '@unhead/react';
+import { getPageTitle, getPageDescription } from '@/lib/siteConfig';
 
 const NotFound = () => {
   const location = useLocation();
 
   useSeoMeta({
-    title: '404 - Page Not Found | NostrHub',
-    description: 'The page you are looking for could not be found. Return to NostrHub to discover NIPs and Nostr content.',
+    title: getPageTitle('404 - Page Not Found'),
+    description: getPageDescription('404'),
   });
 
   useEffect(() => {

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useSeoMeta } from '@unhead/react';
 import { Layout } from '@/components/Layout';
+import { getPageTitle, getPageDescription } from '@/lib/siteConfig';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -39,8 +40,8 @@ const JOB_STATUS_FILTERS = [
 
 export default function DVMPage() {
   useSeoMeta({
-    title: 'DVM Marketplace (Beta) | NostrHub',
-    description: 'Discover and use Data Vending Machines - AI-powered services that process your data on-demand.',
+    title: getPageTitle('DVM Marketplace (Beta)'),
+    description: getPageDescription('dvm'),
   });
 
   const [activeTab, setActiveTab] = useState('services');

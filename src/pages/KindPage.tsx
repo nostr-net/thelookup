@@ -1,6 +1,7 @@
 import { Link, useParams } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { useSeoMeta } from '@unhead/react';
+import { getPageTitle, getPageDescription } from '@/lib/siteConfig';
 import { CustomNipCard } from '@/components/CustomNipCard';
 import { OfficialNipCard } from '@/components/OfficialNipCard';
 import { useAllNipsByKind } from '@/hooks/useAllNipsByKind';
@@ -18,8 +19,8 @@ export default function KindPage() {
   const { data: nips, isLoading, error } = useAllNipsByKind(kind);
 
   useSeoMeta({
-    title: `Kind ${kind} NIPs | NostrHub`,
-    description: `Discover all official and custom NIPs that define event kind ${kind} on the Nostr protocol. Browse specifications and join the discussion.`,
+    title: getPageTitle(`Kind ${kind} NIPs`),
+    description: getPageDescription('kind', { kind }),
   });
 
   return (

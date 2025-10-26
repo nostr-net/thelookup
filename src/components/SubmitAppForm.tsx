@@ -13,9 +13,11 @@ import { Separator } from '@/components/ui/separator';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useNostrPublish } from '@/hooks/useNostrPublish';
 import { useToast } from '@/hooks/useToast';
+import { useAppSubmissionPayment } from '@/hooks/useAppSubmissionPayment';
 import { LoginArea } from '@/components/auth/LoginArea';
 import { TagInput } from '@/components/TagInput';
-import { Plus, X, Globe, Smartphone, Monitor, Zap } from 'lucide-react';
+import { AppSubmissionPaymentDialog } from '@/components/AppSubmissionPaymentDialog';
+import { Plus, X, Globe, Smartphone, Monitor, Zap, CreditCard } from 'lucide-react';
 
 
 interface AppFormData {
@@ -50,6 +52,14 @@ export function SubmitAppForm() {
   const navigate = useNavigate();
   const { config } = useAppConfig();
 
+  // SubmitAppForm is always for NEW app submissions, so payment is always required
+  // (EditAppForm is used for editing existing apps, which doesn't require payment)
+
+  // Payment functionality
+  const { isPaymentRequired, paymentConfig } = useAppSubmissionPayment();
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [pendingFormData, setPendingFormData] = useState<AppFormData | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [customKind, setCustomKind] = useState('');
   const [newWebHandler, setNewWebHandler] = useState({ url: '', type: '' });
   const [newIosHandler, setNewIosHandler] = useState('');
@@ -137,25 +147,19 @@ export function SubmitAppForm() {
     setValue('androidHandlers', watchedAndroidHandlers.filter((_, i) => i !== index));
   };
 
-  const onSubmit = (data: AppFormData) => {
-    if (!user) {
-      toast({
-        title: 'Authentication Required',
-        description: 'Please log in to submit an app.',
-        variant: 'destructive',
-      });
+  const submitAppToRelay = (data: AppFormData) => {
+    // Prevent duplicate submissions
+    if (isSubmitting) {
+      console.log('Already submitting, ignoring duplicate call');
       return;
     }
-
-    if (data.supportedKinds.length === 0) {
-      toast({
-        title: 'Validation Error',
-        description: 'Please select at least one supported event kind.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
+    
+    setIsSubmitting(true);
+    console.log('Starting app submission...');
+    
+    // Additional safety: close payment dialog if still open
+    setShowPaymentDialog(false);
+    
     // Generate a random d tag
     const dTag = Math.random().toString(36).substring(2, 15);
 
@@ -181,6 +185,11 @@ export function SubmitAppForm() {
       website: data.website || undefined,
     });
 
+    toast({
+      title: 'Publishing App',
+      description: 'Sending your app to the Nostr network...',
+    });
+
     publishEvent(
       {
         kind: 31990,
@@ -189,6 +198,7 @@ export function SubmitAppForm() {
       },
       {
         onSuccess: (event) => {
+          setIsSubmitting(false);
           toast({
             title: 'App Submitted Successfully!',
             description: 'Your app has been published to the Nostr network.',
@@ -203,12 +213,20 @@ export function SubmitAppForm() {
               identifier: dTag,
               relays: [config.relayUrl],
             });
-            navigate(`/${naddr}`);
+            console.log('Navigating to app:', `/${naddr}`);
+            console.log('Event details:', { dTag, kind: event.kind, pubkey: event.pubkey });
+            
+            // For now, navigate to apps list to avoid black screen
+            // TODO: Fix app detail page rendering issue
+            console.log('App submitted successfully, redirecting to apps list');
+            navigate('/apps');
           } else {
+            console.log('No dTag found, resetting form');
             reset();
           }
         },
         onError: (error) => {
+          setIsSubmitting(false);
           toast({
             title: 'Submission Failed',
             description: error instanceof Error ? error.message : 'Failed to submit app.',
@@ -217,6 +235,67 @@ export function SubmitAppForm() {
         },
       }
     );
+  };
+
+  const onSubmit = (data: AppFormData) => {
+    if (!user) {
+      toast({
+        title: 'Authentication Required',
+        description: 'Please log in to submit an app.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (data.supportedKinds.length === 0) {
+      toast({
+        title: 'Validation Error',
+        description: 'Please select at least one supported event kind.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Check if payment is required (always required for new app submissions)
+    if (isPaymentRequired && paymentConfig) {
+      // Store form data and show payment dialog
+      setPendingFormData(data);
+      setShowPaymentDialog(true);
+      toast({
+        title: 'Payment Required',
+        description: `A payment of ${paymentConfig?.feeAmount || 0} sats is required for all new app submissions.`,
+      });
+    } else {
+      // Submit directly without payment
+      submitAppToRelay(data);
+    }
+  };
+
+  const handlePaymentConfirmed = () => {
+    if (pendingFormData && !isSubmitting) {
+      console.log('Payment confirmed, closing dialog...');
+      
+      // Close dialog first
+      setShowPaymentDialog(false);
+      
+      toast({
+        title: 'Payment Confirmed',
+        description: 'Payment verified! Submitting your app to the network...',
+      });
+      
+      // Submit app after a brief delay to ensure dialog closes
+      setTimeout(() => {
+        if (pendingFormData) {
+          const dataToSubmit = pendingFormData;
+          setPendingFormData(null);
+          submitAppToRelay(dataToSubmit);
+        }
+      }, 500);
+    } else if (isSubmitting) {
+      console.log('Already submitting, ignoring payment confirmation');
+    } else if (!pendingFormData) {
+      console.log('No pending form data, ignoring payment confirmation');
+    }
   };
 
   if (!user) {
@@ -587,12 +666,32 @@ export function SubmitAppForm() {
 
           {/* Submit Button */}
           <div className="flex justify-end">
-            <Button type="submit" disabled={isPending} className="min-w-32">
-              {isPending ? 'Submitting...' : 'Submit App'}
+            <Button 
+              type="submit" 
+              disabled={isPending || isSubmitting} 
+              className="min-w-32"
+            >
+              {isPending || isSubmitting ? (
+                'Submitting...'
+              ) : isPaymentRequired ? (
+                <>
+                  <CreditCard className="h-4 w-4 mr-2" />
+                  Pay & Submit App
+                </>
+              ) : (
+                'Submit App'
+              )}
             </Button>
           </div>
         </form>
       </CardContent>
+
+      {/* Payment Dialog */}
+      <AppSubmissionPaymentDialog
+        open={showPaymentDialog}
+        onOpenChange={setShowPaymentDialog}
+        onPaymentConfirmed={handlePaymentConfirmed}
+      />
     </Card>
   );
 }

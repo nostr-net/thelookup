@@ -2,10 +2,11 @@ import { Layout } from '@/components/Layout';
 import { AnnounceRepositoryForm } from '@/components/AnnounceRepositoryForm';
 import { useSeoMeta } from '@unhead/react';
 import { GitBranch } from 'lucide-react';
+import { getPageTitle } from '@/lib/siteConfig';
 
 export default function AnnounceRepositoryPage() {
   useSeoMeta({
-    title: 'Add Repository | NostrHub',
+    title: getPageTitle('Add Repository'),
     description: 'Add your git repository on Nostr using NIP-34. Share your code, allow others to discover it, and enable patch submissions and issue reporting.',
   });
 

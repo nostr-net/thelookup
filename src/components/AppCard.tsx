@@ -190,7 +190,7 @@ export function AppCard({ app, className }: AppCardProps) {
 
         {/* Action Buttons */}
         <div className="flex-1 flex flex-col justify-end space-y-2 pt-2">
-          <Button asChild className="w-full">
+          <Button asChild className="w-full bg-purple-600 hover:bg-purple-700 text-white">
             <Link to={`/${nip19.naddrEncode({
               kind: 31990,
               pubkey: app.pubkey,

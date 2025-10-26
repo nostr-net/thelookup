@@ -7,6 +7,7 @@ import { useAuthor } from '@/hooks/useAuthor';
 import { useIssueStatus } from '@/hooks/useIssueStatus';
 import { getIssueSubject, getIssueLabels } from '@/lib/repository';
 import { genUserName } from '@/lib/genUserName';
+import { getPageTitle, getPageDescription } from '@/lib/siteConfig';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -54,8 +55,8 @@ export default function IssuePage() {
   const labels = issue ? getIssueLabels(issue) : [];
 
   useSeoMeta({
-    title: subject ? `${subject} | Issue | NostrHub` : 'Issue | NostrHub',
-    description: `Issue on NostrHub.`,
+    title: subject ? getPageTitle(subject) : getPageTitle('Issue'),
+    description: getPageDescription('issue'),
   });
 
   if (!decoded) {

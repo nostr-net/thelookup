@@ -5,11 +5,18 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Info } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { getPageTitle, getPageDescription } from '@/lib/siteConfig';
 
 export default function SubmitAppPage() {
+  // Get payment configuration from environment variables
+  const paymentEnabled = import.meta.env.VITE_SUBMIT_APP_PAYMENT_ENABLED === 'true';
+  const feeAmount = parseInt(import.meta.env.VITE_SUBMIT_APP_FEE || '0', 10);
+  const lightningAddress = import.meta.env.VITE_SUBMIT_APP_LIGHTNING_ADDRESS;
+  const isPaymentEnabled = paymentEnabled && lightningAddress && feeAmount > 0;
+
   useSeoMeta({
-    title: 'Submit App | NostrHub',
-    description: 'Submit your Nostr application to the directory. Create a Handler Information event to make your app discoverable by users and other clients.',
+    title: getPageTitle('Submit App'),
+    description: getPageDescription('Submit your Nostr application to the directory. Create a Handler Information event to make your app discoverable by users and other clients'),
   });
 
   return (
@@ -42,8 +49,13 @@ export default function SubmitAppPage() {
                   <ul className="list-disc list-inside space-y-1 ml-4">
                     <li>Your app will be discoverable by users looking for specialized applications</li>
                     <li>Other clients can redirect users to your app for supported event types</li>
-                    <li>You can update your app information anytime by submitting again</li>
+                    <li>You can update your app information anytime by editing it (edits are free)</li>
                     <li>All information is stored on the Nostr network, not on centralized servers</li>
+                    {isPaymentEnabled ? (
+                      <li className="text-yellow-700 dark:text-yellow-300"><strong>New app submissions require a {feeAmount} sat Lightning payment</strong> to prevent spam (future edits will be free)</li>
+                    ) : (
+                      <li className="text-green-700 dark:text-green-300">New app submissions are currently free</li>
+                    )}
                   </ul>
                 </div>
               </div>

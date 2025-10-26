@@ -3,6 +3,7 @@ import { ScrollToTop } from "@/components/ScrollToTop";
 
 import Index from "./pages/Index";
 import NipRedirect from "./pages/NipRedirect";
+import ResourcesPage from "./pages/ResourcesPage";
 import CreateNipPage from "./pages/CreateNipPage";
 import EditNipPage from "./pages/EditNipPage";
 import NotificationsPage from "./pages/NotificationsPage";
@@ -14,6 +15,7 @@ import SubmitAppPage from "./pages/SubmitAppPage";
 import EditAppPage from "./pages/EditAppPage";
 import RepositoriesPage from "./pages/RepositoriesPage";
 import AnnounceRepositoryPage from "./pages/AnnounceRepositoryPage";
+import EditRepositoryPage from "./pages/EditRepositoryPage";
 import CreateIssuePage from "./pages/CreateIssuePage";
 import RepositoryPage from "./pages/RepositoryPage";
 import PatchPage from "./pages/PatchPage";
@@ -27,6 +29,7 @@ export function AppRouter() {
       <ScrollToTop />
       <Routes>
         <Route path="/" element={<AppsPage />} />
+        <Route path="/resources" element={<ResourcesPage />} />
         <Route path="/nips" element={<Index />} />
         <Route path="/nip/:id" element={<NipRedirect />} />
         <Route path="/create" element={<CreateNipPage />} />
@@ -38,6 +41,7 @@ export function AppRouter() {
         <Route path="/apps/edit/:naddr" element={<EditAppPage />} />
         <Route path="/repositories" element={<RepositoriesPage />} />
         <Route path="/repositories/create" element={<AnnounceRepositoryPage />} />
+        <Route path="/repositories/:naddr/edit" element={<EditRepositoryPage />} />
         <Route path="/repositories/:naddr" element={<RepositoryPage />} />
         <Route path="/repositories/:naddr/issues/create" element={<CreateIssuePage />} />
         <Route path="/repositories/:nip19/issues/:issueId" element={<IssuePage />} />

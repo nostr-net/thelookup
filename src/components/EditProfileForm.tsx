@@ -40,6 +40,8 @@ export const EditProfileForm: React.FC = () => {
       banner: '',
       website: '',
       nip05: '',
+      lud16: '',
+      lud06: '',
       bot: false,
     },
   });
@@ -54,6 +56,8 @@ export const EditProfileForm: React.FC = () => {
         banner: metadata.banner || '',
         website: metadata.website || '',
         nip05: metadata.nip05 || '',
+        lud16: metadata.lud16 || '',
+        lud06: metadata.lud06 || '',
         bot: metadata.bot || false,
       });
     }
@@ -231,6 +235,49 @@ export const EditProfileForm: React.FC = () => {
               </FormItem>
             )}
           />
+        </div>
+
+        <div className="space-y-4">
+          <div className="text-lg font-medium">Lightning Address (for receiving zaps)</div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <FormField
+              control={form.control}
+              name="lud16"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Lightning Address (LUD-16)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="you@wallet.com" {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    Your modern lightning address (recommended). Format: username@domain
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="lud06"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Lightning Node (LUD-06)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="lnbc1..." {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    Your lightning node public key (legacy format).
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Add a lightning address to receive zaps (Bitcoin lightning payments) for your NIPs and other content.
+            Users can send you sats to support your work.
+          </p>
         </div>
 
         <FormField

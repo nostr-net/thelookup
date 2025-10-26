@@ -1,6 +1,7 @@
 import { useParams, Navigate } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { useSeoMeta } from '@unhead/react';
+import { getPageTitle, getPageDescription } from '@/lib/siteConfig';
 import { EditAppForm } from '@/components/EditAppForm';
 import { useApp } from '@/hooks/useApp';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
@@ -16,8 +17,8 @@ export default function EditAppPage() {
   const { data: app, isLoading, error } = useApp(naddr || '');
 
   useSeoMeta({
-    title: app ? `Edit ${app.name} | NostrHub` : 'Edit App | NostrHub',
-    description: 'Edit your Nostr application information, update supported event kinds, and modify app settings.',
+    title: app ? getPageTitle(`Edit ${app.name}`) : getPageTitle('Edit App'),
+    description: getPageDescription('edit-app'),
   });
 
   if (!naddr) {

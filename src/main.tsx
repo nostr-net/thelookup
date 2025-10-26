@@ -5,10 +5,12 @@ import './lib/polyfills.ts';
 
 import App from './App.tsx';
 import './index.css';
+import { getSiteName } from './lib/siteConfig';
 
-// Client-side redirect from nostrnips.com and nostrproto.com to nostrhub.io
+// Client-side redirect from nostrnips.com and nostrproto.com to configured site
 if (window.location.hostname === 'nostrnips.com' || window.location.hostname === 'nostrproto.com') {
-  const newUrl = window.location.href.replace(window.location.hostname, 'nostrhub.io');
+  const siteName = getSiteName();
+  const newUrl = window.location.href.replace(window.location.hostname, siteName);
   window.location.replace(newUrl);
 }
 

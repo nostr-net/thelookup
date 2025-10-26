@@ -1,6 +1,7 @@
 import { useParams, Link } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { useSeoMeta } from '@unhead/react';
+import { getPageTitle, getPageDescription } from '@/lib/siteConfig';
 import { AppCard } from '@/components/AppCard';
 import { AppCardSkeleton } from '@/components/AppCardSkeleton';
 import { useAppsByTag } from '@/hooks/useAppsByTag';
@@ -15,8 +16,8 @@ export default function AppsByTagPage() {
   const { data: apps, isLoading, error } = useAppsByTag(tag || '');
 
   useSeoMeta({
-    title: tag ? `Apps tagged "${tag}" | NostrHub` : 'Apps by Tag | NostrHub',
-    description: tag ? `Discover Nostr applications tagged with "${tag}". Browse apps by category and find the perfect tools for your needs.` : 'Browse Nostr applications by tag.',
+    title: tag ? getPageTitle(`Apps tagged "${tag}"`) : getPageTitle('Apps by Tag'),
+    description: getPageDescription('apps-by-tag', { tag }),
   });
 
   if (!tag) {

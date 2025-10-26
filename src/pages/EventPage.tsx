@@ -1,6 +1,7 @@
 import { useParams } from 'react-router-dom';
 import { nip19 } from 'nostr-tools';
 import { useSeoMeta } from '@unhead/react';
+import { getPageTitle, getPageDescription } from '@/lib/siteConfig';
 
 import { Layout } from '@/components/Layout';
 import { EventViewer } from '@/components/EventViewer';
@@ -21,8 +22,8 @@ export default function EventPage({ nip19: propNip19 }: EventPageProps) {
   const nip19Identifier = propNip19 || paramNip19;
 
   useSeoMeta({
-    title: 'Nostr Event | NostrHub',
-    description: 'View a Nostr event with its content, metadata, and interactions on NostrHub.',
+    title: getPageTitle('Nostr Event'),
+    description: getPageDescription('event'),
   });
 
   if (!nip19Identifier) {
