@@ -22,10 +22,12 @@ import PatchPage from "./pages/PatchPage";
 import DVMPage from "./pages/DVMPage";
 import NotFound from "./pages/NotFound";
 import IssuePage from "./pages/IssuePage";
+import SearchPage from "./pages/SearchPage";
 
 export function AppRouter() {
+  const basename = (import.meta.env.BASE_URL || "/").replace(/\/$/, "");
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={basename}>
       <ScrollToTop />
       <Routes>
         <Route path="/" element={<AppsPage />} />
@@ -47,6 +49,7 @@ export function AppRouter() {
         <Route path="/repositories/:nip19/issues/:issueId" element={<IssuePage />} />
         <Route path="/repositories/:nip19/patches/:patchId" element={<PatchPage />} />
         <Route path="/dvm" element={<DVMPage />} />
+        <Route path="/search" element={<SearchPage />} />
         <Route path="/kind/:k" element={<KindPage />} />
         <Route path="/:nip19" element={<Nip19Page />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
