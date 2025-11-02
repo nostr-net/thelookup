@@ -38,8 +38,13 @@ jobs:
           cache: npm
 
       - name: Install dependencies and build
+        env:
+          # Provide Vite env vars so index.html placeholders resolve in CI
+          VITE_SITE_NAME: ${{ vars.VITE_SITE_NAME || 'nostr.net' }}
+          VITE_SITE_DISPLAY_NAME: ${{ vars.VITE_SITE_DISPLAY_NAME || 'nostr.net' }}
+          VITE_SITE_URL: ${{ vars.VITE_SITE_URL || format('https://{0}.github.io/{1}', github.repository_owner, github.event.repository.name) }}
         run: |
-          npm install
+          npm ci
           npm run build
           cp dist/index.html dist/404.html
 
