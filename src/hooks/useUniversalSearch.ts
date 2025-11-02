@@ -90,6 +90,8 @@ export function useUniversalSearch(options: SearchOptions) {
       // Apply ranking if there's a query
       if (options.query && options.query.trim() !== '') {
         filtered = rankResults(filtered, options.query);
+        // Hide non-matching results when a query is present
+        filtered = filtered.filter((r) => (r.relevanceScore || 0) > 0);
       }
 
       // Apply sorting

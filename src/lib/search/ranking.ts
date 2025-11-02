@@ -19,6 +19,7 @@ export function rankResults(
     .map(result => {
       let score = 0;
       const matchedFields: string[] = [];
+      let hadMatch = false;
 
       const nameLower = result.name?.toLowerCase() || '';
       const descriptionLower = result.description?.toLowerCase() || '';
@@ -26,7 +27,8 @@ export function rankResults(
       // Name matches (highest weight)
       if (nameLower.includes(queryLower)) {
         score += 10;
-        matchedFields.push('name');
+        if (!matchedFields.includes('name')) matchedFields.push('name');
+        hadMatch = true;
 
         // Exact match bonus
         if (nameLower === queryLower) {
@@ -42,7 +44,8 @@ export function rankResults(
       // Description matches (medium weight)
       if (descriptionLower && descriptionLower.includes(queryLower)) {
         score += 5;
-        matchedFields.push('description');
+        if (!matchedFields.includes('description')) matchedFields.push('description');
+        hadMatch = true;
       }
 
       // Tag matches (lower weight)
@@ -50,9 +53,8 @@ export function rankResults(
         const tagLower = tag.toLowerCase();
         if (tagLower.includes(queryLower)) {
           score += 3;
-          if (!matchedFields.includes('tag')) {
-            matchedFields.push('tag');
-          }
+          if (!matchedFields.includes('tag')) matchedFields.push('tag');
+          hadMatch = true;
         }
         // Exact tag match bonus
         if (tagLower === queryLower) {
@@ -66,50 +68,57 @@ export function rankResults(
 
         if (nameLower.includes(word)) {
           score += 2;
+          if (!matchedFields.includes('name')) matchedFields.push('name');
+          hadMatch = true;
         }
         if (descriptionLower && descriptionLower.includes(word)) {
           score += 1;
+          if (!matchedFields.includes('description')) matchedFields.push('description');
+          hadMatch = true;
         }
       });
 
-      // Type-specific bonuses
-      if (result.type === 'app') {
-        // Apps with website are more complete
-        if (result.app?.website) {
-          score += 1;
+      // Only add secondary bonuses if there was a match
+      if (hadMatch) {
+        // Type-specific bonuses
+        if (result.type === 'app') {
+          // Apps with website are more complete
+          if (result.app?.website) {
+            score += 1;
+          }
+          // Apps with picture are more complete
+          if (result.app?.picture) {
+            score += 1;
+          }
+          // Apps supporting more kinds might be more useful
+          if (result.app?.supportedKinds && result.app.supportedKinds.length > 0) {
+            score += Math.min(result.app.supportedKinds.length * 0.1, 2);
+          }
         }
-        // Apps with picture are more complete
-        if (result.app?.picture) {
-          score += 1;
-        }
-        // Apps supporting more kinds might be more useful
-        if (result.app?.supportedKinds && result.app.supportedKinds.length > 0) {
-          score += Math.min(result.app.supportedKinds.length * 0.1, 2);
-        }
-      }
 
-      if (result.type === 'repository') {
-        // Repositories with maintainers are more active
-        if (result.repository?.maintainers?.length) {
-          score += Math.min(result.repository.maintainers.length * 0.5, 3);
+        if (result.type === 'repository') {
+          // Repositories with maintainers are more active
+          if (result.repository?.maintainers?.length) {
+            score += Math.min(result.repository.maintainers.length * 0.5, 3);
+          }
+          // Repositories with web URLs are more accessible
+          if (result.repository?.webUrls?.length) {
+            score += 1;
+          }
         }
-        // Repositories with web URLs are more accessible
-        if (result.repository?.webUrls?.length) {
+
+        // Recency bonus (newer items get slight boost)
+        const ageInDays = (Date.now() / 1000 - result.createdAt) / (60 * 60 * 24);
+        if (ageInDays < 7) {
+          score += 2;
+        } else if (ageInDays < 30) {
           score += 1;
         }
-      }
-
-      // Recency bonus (newer items get slight boost)
-      const ageInDays = (Date.now() / 1000 - result.createdAt) / (60 * 60 * 24);
-      if (ageInDays < 7) {
-        score += 2;
-      } else if (ageInDays < 30) {
-        score += 1;
       }
 
       return {
         ...result,
-        relevanceScore: score,
+        relevanceScore: hadMatch ? score : 0,
         matchedFields: matchedFields.length > 0 ? matchedFields : undefined,
       };
     })
