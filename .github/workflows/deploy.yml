@@ -40,6 +40,7 @@ jobs:
       - name: Install dependencies and build
         env:
           GITHUB_PAGES: true
+          VITE_GITHUB_PAGES: true
           VITE_SITE_NAME: bitkarrot.github.io/thelookup
           VITE_SITE_URL: https://bitkarrot.github.io/thelookup
           VITE_SITE_DISPLAY_NAME: NostrHub

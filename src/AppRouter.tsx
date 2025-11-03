@@ -24,8 +24,10 @@ import NotFound from "./pages/NotFound";
 import IssuePage from "./pages/IssuePage";
 
 export function AppRouter() {
+  const basename = import.meta.env.PROD && import.meta.env.VITE_GITHUB_PAGES ? '/thelookup' : '';
+  
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={basename}>
       <ScrollToTop />
       <Routes>
         <Route path="/" element={<AppsPage />} />
