@@ -25,23 +25,14 @@ export function SearchResultCard({ result, className }: SearchResultCardProps) {
   const getResultLink = () => {
     const dTag = result.event.tags.find(([name]) => name === 'd')?.[1] || '';
 
-    if (result.type === 'app') {
-      const naddr = nip19.naddrEncode({
-        identifier: dTag,
-        pubkey: result.pubkey,
-        kind: 31990,
-        relays: [config.relayUrl],
-      });
-      return `/apps/detail/${naddr}`;
-    } else {
-      const naddr = nip19.naddrEncode({
-        identifier: dTag,
-        pubkey: result.pubkey,
-        kind: 30617,
-        relays: [config.relayUrl],
-      });
-      return `/repositories/${naddr}`;
-    }
+    const naddr = nip19.naddrEncode({
+      identifier: dTag,
+      pubkey: result.pubkey,
+      kind: result.type === 'app' ? 31990 : 30617,
+      relays: [config.relayUrl],
+    });
+
+    return `/${naddr}`;
   };
 
   const TypeIcon = result.type === 'app' ? Smartphone : GitBranch;

@@ -29,7 +29,7 @@ export function SearchResultListItem({ result }: SearchResultListItemProps) {
     relays: [config.relayUrl],
   });
 
-  const detailLink = result.type === 'app' ? `/apps/detail/${naddr}` : `/repositories/${naddr}`;
+  const detailLink = `/${naddr}`;
 
   const TypeIcon = result.type === 'app' ? Smartphone : GitBranch;
   const typeColor = result.type === 'app' ? 'text-blue-500' : 'text-green-500';
