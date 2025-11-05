@@ -16,7 +16,7 @@ export function useUpdateNip() {
   const { mutateAsync, mutate } = useNostrPublish();
   console.log('useNostrPublish mutate types:', typeof mutate, typeof mutateAsync);
   const publishEvent = async (vars: { kind: number; content: string; tags: string[][] }) => {
-    const isTest = typeof import.meta !== 'undefined' && (import.meta as any).env?.MODE === 'test';
+    const isTest = typeof import.meta !== 'undefined' && (import.meta as { env?: { MODE?: string } }).env?.MODE === 'test';
     if (isTest && typeof mutate === 'function') {
       // Ensure tests that mock useNostrPublish(mutate) see the call
       (mutate as unknown as (v: typeof vars, opts: { onSuccess: (e: NostrEvent) => void; onError: (err: Error) => void }) => void)(vars, {

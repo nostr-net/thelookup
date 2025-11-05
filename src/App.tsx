@@ -10,7 +10,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NostrLoginProvider } from '@nostrify/react/login';
 import { AppProvider } from './components/AppProvider';
-import { AnimatedBackground } from './components/AnimatedBackground';
 import { NWCProvider } from './contexts/NWCContext';
 import AppRouter from './AppRouter';
 

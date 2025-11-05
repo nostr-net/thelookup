@@ -5,7 +5,7 @@ import { useAppConfig } from '@/components/AppProvider';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { GitBranch, Globe, Users } from 'lucide-react';
+import { GitBranch, Globe } from 'lucide-react';
 import { useAuthor } from '@/hooks/useAuthor';
 import { parseRepositoryEvent, getRepositoryDisplayName } from '@/lib/repository';
 import { genUserName } from '@/lib/genUserName';

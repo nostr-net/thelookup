@@ -9,7 +9,7 @@ export function useWallet() {
   useEffect(() => {
     // Check for WebLN provider
     if (typeof window !== 'undefined' && 'webln' in window) {
-      setWebln((window as any).webln as WebLNProvider);
+      setWebln((window as { webln?: WebLNProvider }).webln || null);
     }
   }, []);
 

@@ -10,7 +10,7 @@ import { LoginArea } from '@/components/auth/LoginArea';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertCircle, Edit, GitBranch } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertDescription } from '@/components/ui/alert';
 import { parseRepositoryEvent } from '@/lib/repository';
 
 export default function EditRepositoryPage() {

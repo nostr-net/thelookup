@@ -62,7 +62,7 @@ export function FlagDialog({ app, children }: FlagDialogProps) {
       setOpen(false);
       setReportType('');
       setContent('');
-    } catch (error) {
+    } catch {
       toast({
         title: 'Error',
         description: 'Failed to submit flag. Please try again.',

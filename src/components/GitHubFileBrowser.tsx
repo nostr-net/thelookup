@@ -6,7 +6,6 @@ import { MarkdownRenderer } from '@/components/MarkdownRenderer';
 import {
   Folder,
   File,
-  Home,
   GitBranch,
   BookOpen,
   ExternalLink,
@@ -31,7 +30,7 @@ export function GitHubFileBrowser({ cloneUrl, className }: GitHubFileBrowserProp
 
   // Parse GitHub URL to get owner/repo/branch
   const parseGitHubUrl = (url: string) => {
-    const match = url.match(/https?:\/\/github\.com\/([^\/]+)\/([^\/\?]+)(?:\/tree\/([^\/\?]+))?/);
+    const match = url.match(/https?:\/\/github\.com\/([^/]+)\/([^/?]+)(?:\/tree\/([^/?]+))?/);
     if (match) {
       return {
         owner: match[1],
@@ -57,7 +56,7 @@ export function GitHubFileBrowser({ cloneUrl, className }: GitHubFileBrowserProp
     }
   }
 
-  const { useFileContent, useFileList, useReadme, repoInfo, isLoaded, isLoading, error } = useGitHubRepository(
+  const { useFileContent, useFileList, useReadme, repoInfo, isLoaded: _isLoaded, isLoading, error } = useGitHubRepository(
     githubInfo?.owner || '',
     githubInfo?.repo || '',
     githubInfo?.branch || 'main'
@@ -65,6 +64,9 @@ export function GitHubFileBrowser({ cloneUrl, className }: GitHubFileBrowserProp
 
   const { data: files, isLoading: filesLoading } = useFileList(currentPath);
   const { data: readmeData, fileName: readmeFileName, isLoading: readmeLoading } = useReadme();
+
+  // Call hook unconditionally at top level, but only use result when selectedFile exists
+  const { data: fileContent, isLoading: fileLoading, error: fileError } = useFileContent(selectedFile?.path || '');
 
   // Auto-select README if in root directory
   React.useEffect(() => {
@@ -165,8 +167,6 @@ export function GitHubFileBrowser({ cloneUrl, className }: GitHubFileBrowserProp
   };
 
   if (selectedFile) {
-    const { data: fileContent, isLoading: fileLoading, error: fileError } = useFileContent(selectedFile.path);
-
     return (
       <div className={className}>
         <Card className="border border-border">

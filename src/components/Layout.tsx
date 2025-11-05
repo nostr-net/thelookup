@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 //import { ThemeTest } from "@/components/theme-test";
-import { ThemeSwitcher } from "@/components/theme-switcher";
 import { Button } from "@/components/ui/button";
 import { LoginArea } from "@/components/auth/LoginArea";
 import { Footer } from "@/components/Footer";

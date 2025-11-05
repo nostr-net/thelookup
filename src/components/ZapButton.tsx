@@ -20,12 +20,12 @@ export function ZapButton({
   eventId,
   eventCoordinate,
   className,
-  variant = 'outline',
+  variant: _variant = 'outline',
   size = 'sm',
   showLabel = true,
 }: ZapButtonProps) {
-  const { user } = useCurrentUser();
-  const { data: author } = useAuthor(recipientPubkey);
+  const { user: _user } = useCurrentUser();
+  const { data: _author } = useAuthor(recipientPubkey);
 
   // Create a minimal Event object for ZapDialog
   // For addressable events (when eventCoordinate exists), use kind 30000 and proper tags
