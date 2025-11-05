@@ -40,7 +40,7 @@ export function SearchResultCard({ result, className }: SearchResultCardProps) {
         kind: 30617,
         relays: [config.relayUrl],
       });
-      return `/repositories/${naddr}`;
+      return `/${naddr}`;
     }
   };
 
