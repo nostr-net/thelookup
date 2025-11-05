@@ -4,7 +4,7 @@ import { ThemeSwitcher } from "@/components/theme-switcher";
 import { Button } from "@/components/ui/button";
 import { LoginArea } from "@/components/auth/LoginArea";
 import { Footer } from "@/components/Footer";
-import { Plus, Zap, Menu, Smartphone, GitBranch, Moon, Sun, Globe, Bot, Search } from "lucide-react";
+import { Plus, Zap, Menu, Smartphone, GitBranch, Moon, Sun, Globe, Bot } from "lucide-react";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import {
   Sheet,
@@ -34,7 +34,6 @@ interface NavSection {
 }
 
 const ALL_SECTIONS: NavSection[] = [
-  { id: 'search', path: '/search', label: 'Search', icon: Search },
   { id: 'resources', path: '/resources', label: 'Resources', icon: Globe },
   { id: 'nips', path: '/nips', label: 'NIPs', icon: Zap },
   { id: 'apps', path: '/apps', label: 'Apps', icon: Smartphone },

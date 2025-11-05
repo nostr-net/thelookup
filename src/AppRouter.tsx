@@ -1,6 +1,7 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { ScrollToTop } from "@/components/ScrollToTop";
 
+import HomePage from "./pages/HomePage";
 import Index from "./pages/Index";
 import NipRedirect from "./pages/NipRedirect";
 import ResourcesPage from "./pages/ResourcesPage";
@@ -30,7 +31,7 @@ export function AppRouter() {
     <BrowserRouter basename={basename}>
       <ScrollToTop />
       <Routes>
-        <Route path="/" element={<AppsPage />} />
+        <Route path="/" element={<HomePage />} />
         <Route path="/resources" element={<ResourcesPage />} />
         <Route path="/nips" element={<Index />} />
         <Route path="/nip/:id" element={<NipRedirect />} />
