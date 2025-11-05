@@ -133,7 +133,7 @@ export function GitHubFileBrowser({ cloneUrl, className }: GitHubFileBrowserProp
           <CardContent className="py-12 text-center">
             <AlertCircle className="h-8 w-8 text-destructive mx-auto mb-4" />
             <p className="text-destructive">Failed to load repository</p>
-            <p className="text-sm text-muted-foreground mt-2">{error}</p>
+            <p className="text-sm text-muted-foreground mt-2">{error instanceof Error ? error.message : String(error)}</p>
             <div className="mt-4">
               <a
                 href={cloneUrl}

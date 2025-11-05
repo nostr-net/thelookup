@@ -42,7 +42,29 @@ export function getPageTitle(pageTitle: string): string {
   return `${pageTitle} | ${siteName}`;
 }
 
-export function getPageDescription(description: string): string {
+type DescriptionContext = Record<string, string | number | undefined>;
+
+export function getPageDescription(keyOrDescription: string, ctx?: DescriptionContext): string {
   const siteName = getSiteFullName();
-  return description.includes(siteName) ? description : `${description} on ${siteName}.`;
+
+  if (!ctx) {
+    const description = keyOrDescription;
+    return description.includes(siteName) ? description : `${description} on ${siteName}.`;
+  }
+
+  const templates: Record<string, (c: DescriptionContext) => string> = {
+    app: ({ appName }) => `Discover features and supported kinds for ${appName}.`,
+    repository: ({ repoName }) => `Explore repository ${repoName} and its issues and patches.`,
+    'apps-by-tag': ({ tag }) => `Browse apps tagged with ${tag}.`,
+    patch: ({ subject, authorName }) => `Patch "${subject}" by ${authorName}.`,
+    kind: ({ kind }) => `Apps that support Nostr kind ${kind}.`,
+    'official-nip': ({ title, nipNumber }) => `Official NIP-${nipNumber}: ${title}.`,
+    'custom-nip': ({ title }) => `Custom NIP: ${title}.`,
+    author: ({ name }) => `Apps and repos by ${name}.`,
+    edit: () => `Edit details.`,
+  };
+
+  const template = templates[keyOrDescription];
+  const base = template ? template(ctx) : keyOrDescription;
+  return base.includes(siteName) ? base : `${base} on ${siteName}.`;
 }

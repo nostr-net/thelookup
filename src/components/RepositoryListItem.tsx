@@ -94,18 +94,12 @@ export function RepositoryListItem({ event }: RepositoryListItemProps) {
             </div>
           )}
 
-          {/* Web/Fork Info */}
+          {/* Web Info */}
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
-            {repo.web && (
+            {repo.web && repo.web.length > 0 && (
               <div className="flex items-center gap-1">
                 <Globe className="h-3 w-3" />
                 <span>Web</span>
-              </div>
-            )}
-            {repo.forks && (
-              <div className="flex items-center gap-1">
-                <Users className="h-3 w-3" />
-                <span>{repo.forks} forks</span>
               </div>
             )}
           </div>

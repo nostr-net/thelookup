@@ -27,7 +27,7 @@ interface FormData {
   earliestCommit: string;
 }
 
-interface RepositoryData {
+export interface RepositoryData {
   event: NostrEvent;
   data: ReturnType<typeof parseRepositoryEvent>;
 }
@@ -55,7 +55,7 @@ export function AnnounceRepositoryForm({ repository }: AnnounceRepositoryFormPro
         relays: repo.relays || [],
         maintainers: repo.maintainers || [],
         tags: repo.tags || [],
-        earliestCommit: repo.earliest_commit || '',
+        earliestCommit: repo.earliestCommit || '',
       };
     }
 
@@ -85,7 +85,7 @@ export function AnnounceRepositoryForm({ repository }: AnnounceRepositoryFormPro
         relays: repo.relays || [],
         maintainers: repo.maintainers || [],
         tags: repo.tags || [],
-        earliestCommit: repo.earliest_commit || '',
+        earliestCommit: repo.earliestCommit || '',
       });
     }
   }, [repository]);

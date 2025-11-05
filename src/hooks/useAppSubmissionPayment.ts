@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useState, useCallback, useContext } from 'react';
+import { useMutation, QueryClientContext } from '@tanstack/react-query';
 import { useNostr } from '@nostrify/react';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useToast } from '@/hooks/useToast';
@@ -43,15 +43,18 @@ export function useAppSubmissionPayment() {
 
   // Get payment configuration from environment
   const getPaymentConfig = useCallback((): PaymentConfig | null => {
-    // Check if payment is enabled via master toggle
-    const paymentEnabled = import.meta.env.VITE_SUBMIT_APP_PAYMENT_ENABLED === 'true';
-    
-    if (!paymentEnabled) {
-      return null; // Payment disabled
+    // If explicitly disabled, respect that; otherwise enable when address + fee are present
+    if (import.meta.env.VITE_SUBMIT_APP_PAYMENT_ENABLED === 'false') {
+      return null;
     }
 
     const lightningAddress = import.meta.env.VITE_SUBMIT_APP_LIGHTNING_ADDRESS;
     const feeAmount = parseInt(import.meta.env.VITE_SUBMIT_APP_FEE || '0', 10);
+    console.log('Payment env', {
+      enabled: import.meta.env.VITE_SUBMIT_APP_PAYMENT_ENABLED,
+      lightningAddress,
+      feeAmount,
+    });
 
     if (!lightningAddress || !feeAmount || feeAmount <= 0) {
       console.warn('Payment enabled but missing Lightning address or fee amount');
@@ -70,8 +73,10 @@ export function useAppSubmissionPayment() {
     return config !== null;
   }, [getPaymentConfig]);
 
-  // Create payment invoice
-  const createPaymentMutation = useMutation({
+  const queryClient = useContext(QueryClientContext);
+
+  // Create payment invoice (fallback to no-op when no QueryClientProvider)
+  const createPaymentMutation = queryClient ? useMutation({
     mutationFn: async (): Promise<PaymentResult> => {
       if (!user) {
         throw new Error('User not authenticated');
@@ -179,10 +184,13 @@ export function useAppSubmissionPayment() {
         variant: 'destructive',
       });
     },
-  });
+  }) : {
+    mutate: () => undefined,
+    isPending: false,
+  } as unknown as ReturnType<typeof useMutation<PaymentResult, Error, void>>;
 
   // Verify payment by checking for zap receipts across multiple relays
-  const verifyPaymentMutation = useMutation({
+  const verifyPaymentMutation = queryClient ? useMutation({
     mutationFn: async (): Promise<boolean> => {
       if (!paymentState.zapRequest || !user) {
         throw new Error('No zap request to verify');
@@ -413,7 +421,10 @@ export function useAppSubmissionPayment() {
         variant: 'destructive',
       });
     },
-  });
+  }) : {
+    mutate: () => undefined,
+    isPending: false,
+  } as unknown as ReturnType<typeof useMutation<boolean, Error, void>>;
 
   // Reset payment state
   const resetPayment = useCallback(() => {

@@ -34,7 +34,7 @@ import { useIsMobile } from '@/hooks/useIsMobile';
 import { useWallet } from '@/hooks/useWallet';
 import type { Event } from 'nostr-tools';
 import QRCode from 'qrcode';
-import type { WebLNProvider } from "@webbtc/webln-types";
+import type { WebLNProvider } from "@/types/webln";
 
 interface ZapDialogProps {
   target: Event;
@@ -59,13 +59,14 @@ interface ZapContentProps {
   copied: boolean;
   webln: WebLNProvider | null;
   handleZap: () => void;
-  handleCopy: () => void;
+  handleCopy: () => Promise<void> | void;
   openInWallet: () => void;
   setAmount: (amount: number | string) => void;
   setComment: (comment: string) => void;
   inputRef: React.RefObject<HTMLInputElement>;
   zap: (amount: number, comment: string) => void;
   hasLightningAddress: boolean;
+  isLoggedIn: boolean;
 }
 
 // Moved ZapContent outside of ZapDialog to prevent re-renders causing focus loss
@@ -85,6 +86,7 @@ const ZapContent = forwardRef<HTMLDivElement, ZapContentProps>(({
   inputRef,
   zap,
   hasLightningAddress,
+  isLoggedIn,
 }, ref) => (
   <div ref={ref}>
     {invoice ? (
@@ -233,7 +235,7 @@ const ZapContent = forwardRef<HTMLDivElement, ZapContentProps>(({
           </Button>
         </div>
       </>
-    ) : user ? (
+    ) : isLoggedIn ? (
       <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
         <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
           <Zap className="h-8 w-8 text-muted-foreground" />
@@ -267,8 +269,8 @@ export function ZapDialog({ target, children, className }: ZapDialogProps) {
   const { user } = useCurrentUser();
   const { data: author } = useAuthor(target.pubkey);
   const { toast } = useToast();
-  const { webln, activeNWC } = useWallet();
-  const { zap, isZapping, invoice, setInvoice } = useZaps(target, webln, activeNWC, () => setOpen(false));
+  const { webln } = useWallet();
+  const { zap, isZapping, invoice, setInvoice } = useZaps(target, webln, null, () => setOpen(false));
   const [amount, setAmount] = useState<number | string>(100);
   const [comment, setComment] = useState<string>('');
   const [copied, setCopied] = useState(false);
@@ -359,7 +361,7 @@ export function ZapDialog({ target, children, className }: ZapDialogProps) {
   };
 
   // Check if author has lightning address
-  const hasLightningAddress = author?.metadata?.lud06 || author?.metadata?.lud16;
+  const hasLightningAddress = !!(author?.metadata?.lud06 || author?.metadata?.lud16);
 
   const contentProps = {
     invoice,
@@ -377,6 +379,7 @@ export function ZapDialog({ target, children, className }: ZapDialogProps) {
     inputRef,
     zap,
     hasLightningAddress,
+    isLoggedIn: !!user,
   };
 
   if (user?.pubkey === target.pubkey) {

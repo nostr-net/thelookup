@@ -6,7 +6,7 @@ import { useNWC } from '@/hooks/useNWCContext';
 import type { NWCConnection } from '@/hooks/useNWC';
 import { nip57 } from 'nostr-tools';
 import type { Event } from 'nostr-tools';
-import type { WebLNProvider } from '@webbtc/webln-types';
+import type { WebLNProvider } from '@/types/webln';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNostr } from '@nostrify/react';
 import type { NostrEvent } from '@nostrify/nostrify';
@@ -192,22 +192,14 @@ export function useZaps(
         return;
       }
 
-      // Create zap request - use appropriate event format based on kind
-      // For addressable events (30000-39999), pass the object to get 'a' tag
-      // For all other events, pass the ID string to get 'e' tag
-      const event = (actualTarget.kind >= 30000 && actualTarget.kind < 40000)
-        ? actualTarget
-        : actualTarget.id;
-
       const zapAmount = amount * 1000; // convert to millisats
 
-      const zapRequest = nip57.makeZapRequest({
-        profile: actualTarget.pubkey,
-        event: event,
-        amount: zapAmount,
-        relays: [config.relayUrl],
-        comment
-      });
+      // Create zap request params per nostr-tools types
+      const params = (actualTarget.kind >= 30000 && actualTarget.kind < 40000)
+        ? { event: actualTarget as any, amount: zapAmount, relays: [config.relayUrl], comment }
+        : { pubkey: actualTarget.pubkey, amount: zapAmount, relays: [config.relayUrl], comment };
+
+      const zapRequest = nip57.makeZapRequest(params as any);
 
       // Sign the zap request (but don't publish to relays - only send to LNURL endpoint)
       if (!user.signer) {
