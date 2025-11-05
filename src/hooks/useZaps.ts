@@ -196,10 +196,10 @@ export function useZaps(
 
       // Create zap request params per nostr-tools types
       const params = (actualTarget.kind >= 30000 && actualTarget.kind < 40000)
-        ? { event: actualTarget as any, amount: zapAmount, relays: [config.relayUrl], comment }
+        ? { event: actualTarget as Event, amount: zapAmount, relays: [config.relayUrl], comment }
         : { pubkey: actualTarget.pubkey, amount: zapAmount, relays: [config.relayUrl], comment };
 
-      const zapRequest = nip57.makeZapRequest(params as any);
+      const zapRequest = nip57.makeZapRequest(params as Parameters<typeof nip57.makeZapRequest>[0]);
 
       // Sign the zap request (but don't publish to relays - only send to LNURL endpoint)
       if (!user.signer) {

@@ -31,7 +31,7 @@ const REPORT_TYPES = {
 
 export function useAppFlags(appEventId: string, appAuthorPubkey: string) {
   const { user } = useCurrentUser();
-  const { config } = useAppConfig();
+  const { config: _config } = useAppConfig();
   const queryClient = useQueryClient();
   const publishEvent = useNostrPublish();
 

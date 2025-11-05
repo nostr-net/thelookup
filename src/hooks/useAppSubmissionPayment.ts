@@ -73,10 +73,10 @@ export function useAppSubmissionPayment() {
     return config !== null;
   }, [getPaymentConfig]);
 
-  const queryClient = useContext(QueryClientContext);
+  const _queryClient = useContext(QueryClientContext);
 
-  // Create payment invoice (fallback to no-op when no QueryClientProvider)
-  const createPaymentMutation = queryClient ? useMutation({
+  // Create payment invoice
+  const createPaymentMutation = useMutation({
     mutationFn: async (): Promise<PaymentResult> => {
       if (!user) {
         throw new Error('User not authenticated');
@@ -184,13 +184,10 @@ export function useAppSubmissionPayment() {
         variant: 'destructive',
       });
     },
-  }) : {
-    mutate: () => undefined,
-    isPending: false,
-  } as unknown as ReturnType<typeof useMutation<PaymentResult, Error, void>>;
+  });
 
   // Verify payment by checking for zap receipts across multiple relays
-  const verifyPaymentMutation = queryClient ? useMutation({
+  const verifyPaymentMutation = useMutation({
     mutationFn: async (): Promise<boolean> => {
       if (!paymentState.zapRequest || !user) {
         throw new Error('No zap request to verify');
@@ -421,10 +418,7 @@ export function useAppSubmissionPayment() {
         variant: 'destructive',
       });
     },
-  }) : {
-    mutate: () => undefined,
-    isPending: false,
-  } as unknown as ReturnType<typeof useMutation<boolean, Error, void>>;
+  });
 
   // Reset payment state
   const resetPayment = useCallback(() => {
@@ -605,15 +599,17 @@ function encodeLnurl(url: string): string {
 // Helper function to query a relay for zap receipts using WebSocket
 async function queryRelayForReceipts(relayUrl: string, queries: object[]): Promise<NostrEvent[]> {
   return new Promise((resolve, _reject) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const WebSocket = (window as any)?.WebSocket || (global as any)?.WebSocket;
-    if (!WebSocket) {
+    type WebSocketConstructor = new (url: string) => WebSocket;
+    type WindowWithWebSocket = typeof window & { WebSocket?: WebSocketConstructor };
+    type GlobalWithWebSocket = typeof global & { WebSocket?: WebSocketConstructor };
+    const WebSocketCtor = (window as WindowWithWebSocket)?.WebSocket || (global as GlobalWithWebSocket)?.WebSocket;
+    if (!WebSocketCtor) {
       console.log(`WebSocket not available for ${relayUrl}`);
       resolve([]);
       return;
     }
 
-    const ws = new WebSocket(relayUrl);
+    const ws = new WebSocketCtor(relayUrl);
     const subId = 'zap-receipt-' + Math.random().toString(36).substring(7);
     const allReceipts: NostrEvent[] = [];
     let queryCount = 0;

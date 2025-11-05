@@ -25,7 +25,7 @@ function parseGitHubUrl(url: string): GitHubRepoInfo | null {
     let match: RegExpMatchArray | null;
 
     // HTTPS format: https://github.com/owner/repo.git or https://github.com/owner/repo
-    match = url.match(/^https?:\/\/github\.com\/([^\/]+)\/([^\/\.]+)(?:\.git)?/);
+    match = url.match(/^https?:\/\/github\.com\/([^/]+)\/([^/.]+)(?:\.git)?/);
     if (match) {
       return {
         owner: match[1],
@@ -36,7 +36,7 @@ function parseGitHubUrl(url: string): GitHubRepoInfo | null {
     }
 
     // SSH format: git@github.com:owner/repo.git
-    match = url.match(/^git@github\.com:([^\/]+)\/([^\/\.]+)\.git$/);
+    match = url.match(/^git@github\.com:([^/]+)\/([^/.]+)\.git$/);
     if (match) {
       return {
         owner: match[1],
@@ -92,7 +92,7 @@ async function fetchGitHubReadme(owner: string, repo: string, branch: string = '
   return null;
 }
 
-export function GitHubReadmeDisplay({ repositoryUrl, repositoryNaddr, repositoryOwnerPubkey }: GitHubReadmeDisplayProps) {
+export function GitHubReadmeDisplay({ repositoryUrl, repositoryNaddr: _repositoryNaddr, repositoryOwnerPubkey: _repositoryOwnerPubkey }: GitHubReadmeDisplayProps) {
   const parsedUrl = parseGitHubUrl(repositoryUrl);
 
   const { data: readmeData, isLoading, error } = useQuery({

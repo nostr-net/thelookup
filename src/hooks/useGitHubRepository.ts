@@ -1,5 +1,5 @@
-import { useState, useCallback, useEffect } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 
 export interface GitHubFileEntry {
   name: string;
@@ -24,8 +24,7 @@ interface GitHubApiError {
 }
 
 export function useGitHubRepository(owner: string, repo: string, branch: string = 'main') {
-  const queryClient = useQueryClient();
-  const [state, setState] = useState<GitHubRepositoryState>({
+  const [state, _setState] = useState<GitHubRepositoryState>({
     isLoading: false,
     isLoaded: false,
     error: null,
