@@ -8,14 +8,25 @@ import { SearchFilters } from '@/components/search/SearchFilters';
 import { SearchResultSkeleton } from '@/components/search/SearchResultSkeleton';
 import { useUniversalSearch, useAllSearchTags } from '@/hooks/useUniversalSearch';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, Grid3x3, List, Filter } from 'lucide-react';
 import { getPageTitle, getPageDescription } from '@/lib/siteConfig';
 import { RelaySelector } from '@/components/RelaySelector';
 import { useDebounce } from '@/hooks/useDebounce';
 import type { SearchFilters as SearchFiltersType } from '@/lib/search/types';
+
+const POPULAR_KINDS = [
+  { kind: 1, name: 'Text Notes', icon: '📝' },
+  { kind: 6, name: 'Reposts', icon: '🔄' },
+  { kind: 7, name: 'Reactions', icon: '❤️' },
+  { kind: 30023, name: 'Articles', icon: '📄' },
+  { kind: 31922, name: 'Calendar Events', icon: '📅' },
+  { kind: 30402, name: 'Classified Listings', icon: '🏪' },
+  { kind: 1063, name: 'File Metadata', icon: '📁' },
+];
 
 export default function HomePage() {
   useSeoMeta({
@@ -27,6 +38,8 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'cards' | 'list'>('list');
   const [showFilters, setShowFilters] = useState(false);
+  const [selectedKind, setSelectedKind] = useState<number | null>(null);
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [filters, setFilters] = useState<SearchFiltersType>({
     types: ['app', 'repository'],
     tags: [],
@@ -39,10 +52,26 @@ export default function HomePage() {
   // Debounce search input
   const debouncedQuery = useDebounce(searchQuery, 300);
 
+  // Update filters when kind or tag changes
+  const updatedFilters = useMemo(() => {
+    const newFilters = { ...filters };
+    if (selectedKind !== null) {
+      newFilters.kinds = [selectedKind];
+    } else {
+      newFilters.kinds = undefined;
+    }
+    if (selectedTag) {
+      newFilters.tags = [selectedTag];
+    } else {
+      newFilters.tags = [];
+    }
+    return newFilters;
+  }, [filters.types, filters.dateRange, filters.author, selectedKind, selectedTag]);
+
   // Fetch data
   const { data: results, isLoading, error } = useUniversalSearch({
     query: debouncedQuery,
-    filters,
+    filters: updatedFilters,
     sortBy,
   });
 
@@ -74,91 +103,122 @@ export default function HomePage() {
             />
           </div>
 
-          {/* Universal Search Section */}
+          {/* Search and Filters Section */}
           <div className="space-y-6 pt-8">
-            {/* Header */}
-            <div className="text-center space-y-4">
-              <div className="flex items-center justify-center space-x-3">
+            {/* Search and Filters Card */}
+            <Card className="sm:rounded-lg rounded-none">
+              <CardHeader>
+                <CardTitle className="text-lg">Search</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Search */}
                 <div className="relative">
-                  <Search className="h-8 w-8 text-primary" />
-                  <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl"></div>
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search by name, description, or tags..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
                 </div>
-                <h1 className="text-3xl sm:text-4xl font-bold title-shadow">
-                  Universal Search
-                </h1>
-              </div>
-              <p className="text-muted-foreground max-w-2xl mx-auto">
-                Search across apps and repositories in the Nostr ecosystem
-              </p>
-            </div>
 
-            {/* Search Bar */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by name, description, or tags..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-10"
-              />
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2"
-              >
-                <Filter
-                  className={`h-4 w-4 ${
-                    showFilters ? 'text-primary' : 'text-muted-foreground'
-                  }`}
-                />
-              </button>
-            </div>
+                {/* Type Filter Pills */}
+                <div className="flex flex-wrap gap-2">
+                  <Badge
+                    variant={updatedFilters.types.length === 2 ? 'default' : 'outline'}
+                    className="cursor-pointer"
+                    onClick={() =>
+                      setFilters({ ...filters, types: ['app', 'repository'] })
+                    }
+                  >
+                    All ({results?.length || 0})
+                  </Badge>
+                  <Badge
+                    variant={
+                      updatedFilters.types.includes('app') && updatedFilters.types.length === 1
+                        ? 'default'
+                        : 'outline'
+                    }
+                    className="cursor-pointer"
+                    onClick={() => setFilters({ ...filters, types: ['app'] })}
+                  >
+                    Apps ({typeCounts.app || 0})
+                  </Badge>
+                  <Badge
+                    variant={
+                      updatedFilters.types.includes('repository') &&
+                      updatedFilters.types.length === 1
+                        ? 'default'
+                        : 'outline'
+                    }
+                    className="cursor-pointer"
+                    onClick={() =>
+                      setFilters({ ...filters, types: ['repository'] })
+                    }
+                  >
+                    Repositories ({typeCounts.repository || 0})
+                  </Badge>
+                </div>
 
-            {/* Type Filter Pills */}
-            <div className="flex flex-wrap gap-2">
-              <Badge
-                variant={filters.types.length === 2 ? 'default' : 'outline'}
-                className="cursor-pointer"
-                onClick={() =>
-                  setFilters({ ...filters, types: ['app', 'repository'] })
-                }
-              >
-                All ({results?.length || 0})
-              </Badge>
-              <Badge
-                variant={
-                  filters.types.includes('app') && filters.types.length === 1
-                    ? 'default'
-                    : 'outline'
-                }
-                className="cursor-pointer"
-                onClick={() => setFilters({ ...filters, types: ['app'] })}
-              >
-                Apps ({typeCounts.app || 0})
-              </Badge>
-              <Badge
-                variant={
-                  filters.types.includes('repository') &&
-                  filters.types.length === 1
-                    ? 'default'
-                    : 'outline'
-                }
-                className="cursor-pointer"
-                onClick={() =>
-                  setFilters({ ...filters, types: ['repository'] })
-                }
-              >
-                Repositories ({typeCounts.repository || 0})
-              </Badge>
-            </div>
+                {/* Filters */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Event Types Filter */}
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-medium">Filter by Event Type</h3>
+                    <Select
+                      value={selectedKind?.toString() || "all"}
+                      onValueChange={(value) => setSelectedKind(value === "all" ? null : parseInt(value))}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="All Types" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">
+                          <div className="flex items-center gap-2">
+                            <span>All Types</span>
+                          </div>
+                        </SelectItem>
+                        {POPULAR_KINDS.map(({ kind, name, icon }) => (
+                          <SelectItem key={kind} value={kind.toString()}>
+                            <div className="flex items-center gap-2">
+                              <span>{icon}</span>
+                              <span>{name}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-            {/* Advanced Filters (collapsible) */}
-            {showFilters && (
-              <SearchFilters
-                filters={filters}
-                onFiltersChange={setFilters}
-                availableTags={allTags}
-              />
-            )}
+                  {/* Tags Filter */}
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-medium">Filter by Tags</h3>
+                    <Select
+                      value={selectedTag || "all"}
+                      onValueChange={(value) => setSelectedTag(value === "all" ? null : value)}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="All Tags" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">
+                          <div className="flex items-center gap-2">
+                            <span>All Tags</span>
+                          </div>
+                        </SelectItem>
+                        {allTags.map(tag => (
+                          <SelectItem key={tag} value={tag}>
+                            <div className="flex items-center gap-2">
+                              <span>{tag}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Results Header */}
             {!isLoading && results && (
