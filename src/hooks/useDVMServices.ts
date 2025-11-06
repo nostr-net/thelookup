@@ -6,6 +6,7 @@ interface DVMService {
   pubkey: string;
   name?: string;
   about?: string;
+  picture?: string;
   kinds: number[];
   categories?: string[];
   pricing?: {
@@ -81,6 +82,7 @@ function parseDVMService(event: { id: string; pubkey: string; content: string; t
     pubkey: event.pubkey,
     name: typeof metadata.name === 'string' ? metadata.name : undefined,
     about: typeof metadata.about === 'string' ? metadata.about : undefined,
+    picture: typeof metadata.picture === 'string' ? metadata.picture : undefined,
     kinds,
     categories: categories.length > 0 ? categories : undefined,
     pricing,

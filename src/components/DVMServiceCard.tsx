@@ -16,6 +16,7 @@ interface DVMService {
   pubkey: string;
   name?: string;
   about?: string;
+  picture?: string;
   kinds: number[];
   categories?: string[];
   pricing?: {
@@ -75,7 +76,7 @@ export function DVMServiceCard({ service }: DVMServiceCardProps) {
 
   const displayName = service.name || metadata?.name || genUserName(service.pubkey);
   const description = service.about || metadata?.about || 'No description available';
-  const avatar = metadata?.picture;
+  const avatar = service.picture || metadata?.picture;
 
   const isOnline = service.lastSeen && (Date.now() - service.lastSeen * 1000) < 5 * 60 * 1000; // 5 minutes
 
