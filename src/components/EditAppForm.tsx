@@ -33,6 +33,7 @@ interface AppFormData {
   about: string;
   picture: string;
   website: string;
+  lud16: string;
   supportedKinds: number[];
   webHandlers: Array<{ url: string; type?: string }>;
   iosHandlers: string[];
@@ -83,6 +84,7 @@ export function EditAppForm({ app }: EditAppFormProps) {
       about: '',
       picture: '',
       website: '',
+      lud16: '',
       supportedKinds: [],
       webHandlers: [],
       iosHandlers: [],
@@ -98,6 +100,7 @@ export function EditAppForm({ app }: EditAppFormProps) {
       setValue('about', app.about || '');
       setValue('picture', app.picture || '');
       setValue('website', app.website || '');
+      setValue('lud16', app.lud16 || '');
       setValue('supportedKinds', app.supportedKinds);
       setValue('webHandlers', app.webHandlers);
       setValue('iosHandlers', app.iosHandlers);
@@ -206,6 +209,7 @@ export function EditAppForm({ app }: EditAppFormProps) {
       about: data.about || undefined,
       picture: data.picture || undefined,
       website: data.website || undefined,
+      lud16: data.lud16 || undefined,
     });
 
     publishEvent(
@@ -384,6 +388,19 @@ export function EditAppForm({ app }: EditAppFormProps) {
               )}
               <p className="text-xs text-muted-foreground">
                 Recommended: Square image, at least 256x256 pixels
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="lud16">Lightning Address (optional)</Label>
+              <Input
+                id="lud16"
+                {...register('lud16')}
+                placeholder="you@getalby.com"
+                type="text"
+              />
+              <p className="text-xs text-muted-foreground">
+                Add a lightning address to receive zaps (tips) from users. Supports NIP-57 zaps or regular lightning payments.
               </p>
             </div>
           </div>

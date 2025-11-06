@@ -25,6 +25,7 @@ interface AppFormData {
   about: string;
   picture: string;
   website: string;
+  lud16: string;
   supportedKinds: number[];
   webHandlers: Array<{ url: string; type?: string }>;
   iosHandlers: string[];
@@ -78,6 +79,7 @@ export function SubmitAppForm() {
       about: '',
       picture: '',
       website: '',
+      lud16: '',
       supportedKinds: [],
       webHandlers: [],
       iosHandlers: [],
@@ -183,6 +185,7 @@ export function SubmitAppForm() {
       about: data.about || undefined,
       picture: data.picture || undefined,
       website: data.website || undefined,
+      lud16: data.lud16 || undefined,
     });
 
     toast({
@@ -389,6 +392,19 @@ export function SubmitAppForm() {
               )}
               <p className="text-xs text-muted-foreground">
                 Recommended: Square image, at least 256x256 pixels
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="lud16">Lightning Address (optional)</Label>
+              <Input
+                id="lud16"
+                {...register('lud16')}
+                placeholder="you@getalby.com"
+                type="text"
+              />
+              <p className="text-xs text-muted-foreground">
+                Add a lightning address to receive zaps (tips) from users. Supports NIP-57 zaps or regular lightning payments.
               </p>
             </div>
           </div>
