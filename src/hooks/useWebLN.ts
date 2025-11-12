@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { WebLNProvider } from '@/types/webln';
+import type { WebLNProvider } from '@webbtc/webln-types';
 
 interface UseWebLNReturn {
   webln: WebLNProvider | null;

@@ -20,7 +20,7 @@ export default function KindPage() {
 
   useSeoMeta({
     title: getPageTitle(`Kind ${kind} NIPs`),
-    description: getPageDescription('kind', { kind }),
+    description: getPageDescription(`Explore Nostr event kind ${kind} and its implementations`),
   });
 
   return (

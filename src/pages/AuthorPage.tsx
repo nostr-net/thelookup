@@ -84,10 +84,7 @@ function AuthorView({ pubkey }: { pubkey: string }) {
 
   useSeoMeta({
     title: getPageTitle(displayName),
-    description: getPageDescription('author', {
-      displayName,
-      about: about ? `${about.slice(0, 160)}...` : undefined
-    }),
+    description: getPageDescription(`${displayName} - ${about ? about.slice(0, 160) + '...' : 'Nostr user profile'}`),
   });
 
   const handleDeleteNip = (event: NostrEvent) => {

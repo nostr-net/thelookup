@@ -44,8 +44,4 @@ export interface SignMessageResponse {
   signature: string;
 }
 
-declare global {
-  interface Window {
-    webln?: WebLNProvider;
-  }
-}
+// Note: Window.webln is already declared in @webbtc/webln-types

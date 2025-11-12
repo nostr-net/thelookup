@@ -6,7 +6,6 @@ import { MarkdownRenderer } from '@/components/MarkdownRenderer';
 import {
   Folder,
   File,
-  Home,
   GitBranch,
   BookOpen,
   ExternalLink,
@@ -31,7 +30,7 @@ export function GitHubFileBrowser({ cloneUrl, className }: GitHubFileBrowserProp
 
   // Parse GitHub URL to get owner/repo/branch
   const parseGitHubUrl = (url: string) => {
-    const match = url.match(/https?:\/\/github\.com\/([^\/]+)\/([^\/\?]+)(?:\/tree\/([^\/\?]+))?/);
+    const match = url.match(/https?:\/\/github\.com\/([^/]+)\/([^/?]+)(?:\/tree\/([^/?]+))?/);
     if (match) {
       return {
         owner: match[1],
@@ -57,7 +56,7 @@ export function GitHubFileBrowser({ cloneUrl, className }: GitHubFileBrowserProp
     }
   }
 
-  const { useFileContent, useFileList, useReadme, repoInfo, isLoaded, isLoading, error } = useGitHubRepository(
+  const { useFileContent, useFileList, useReadme, repoInfo, isLoaded: _isLoaded, isLoading, error } = useGitHubRepository(
     githubInfo?.owner || '',
     githubInfo?.repo || '',
     githubInfo?.branch || 'main'
@@ -65,6 +64,7 @@ export function GitHubFileBrowser({ cloneUrl, className }: GitHubFileBrowserProp
 
   const { data: files, isLoading: filesLoading } = useFileList(currentPath);
   const { data: readmeData, fileName: readmeFileName, isLoading: readmeLoading } = useReadme();
+  const { data: fileContent, isLoading: _fileLoading, error: _fileError } = useFileContent(selectedFile?.path || '');
 
   // Auto-select README if in root directory
   React.useEffect(() => {
@@ -165,7 +165,6 @@ export function GitHubFileBrowser({ cloneUrl, className }: GitHubFileBrowserProp
   };
 
   if (selectedFile) {
-    const { data: fileContent, isLoading: fileLoading, error: fileError } = useFileContent(selectedFile.path);
 
     return (
       <div className={className}>
@@ -185,13 +184,13 @@ export function GitHubFileBrowser({ cloneUrl, className }: GitHubFileBrowserProp
             </div>
           </CardHeader>
           <CardContent className="p-6">
-            {fileLoading ? (
+            {_fileLoading ? (
               <div className="space-y-3">
                 <Skeleton className="h-6 w-3/4" />
                 <Skeleton className="h-4 w-full" />
                 <Skeleton className="h-4 w-5/6" />
               </div>
-            ) : fileError ? (
+            ) : _fileError ? (
               <div className="text-center py-8">
                 <AlertCircle className="h-8 w-8 text-destructive mx-auto mb-4" />
                 <p className="text-destructive">Failed to load file</p>

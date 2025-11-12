@@ -31,7 +31,7 @@ const REPORT_TYPES = {
 
 export function useAppFlags(appEventId: string, appAuthorPubkey: string) {
   const { user } = useCurrentUser();
-  const { config } = useAppConfig();
+  const { config: _config } = useAppConfig();
   const queryClient = useQueryClient();
   const publishEvent = useNostrPublish();
 
@@ -60,7 +60,7 @@ export function useAppFlags(appEventId: string, appAuthorPubkey: string) {
   }, { total: 0, byType: {} });
 
   // Check if current user has already flagged this app
-  const userFlag = flags.find(flag => flag.reporterPubkey === user?.pubkey);
+  const userFlag: AppFlag | undefined = flags.find(flag => flag.reporterPubkey === user?.pubkey);
 
   // Mutation to flag an app
   const flagMutation = useMutation({

@@ -49,7 +49,7 @@ export default function PatchPage() {
 
   useSeoMeta({
     title: subject ? getPageTitle(`${subject} | Patch`) : getPageTitle('Patch'),
-    description: getPageDescription('patch', { subject, authorName }),
+    description: getPageDescription(`${subject} - Patch by ${authorName}`),
   });
 
   if (!decoded) {

@@ -4,12 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import type { NostrEvent } from '@/types/nostr';
 
-interface ZapCustomNipProps {
+interface ZapAppProps {
   event: NostrEvent;
   className?: string;
 }
 
-export function ZapCustomNip({ event, className }: ZapCustomNipProps) {
+export function ZapApp({ event, className }: ZapAppProps) {
   const dTag = event.tags.find((tag: string[]) => tag[0] === 'd')?.[1] || '';
   
   // Create event coordinate for addressable events
@@ -19,7 +19,7 @@ export function ZapCustomNip({ event, className }: ZapCustomNipProps) {
     <Card className={className}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg">Support this NIP</CardTitle>
+          <CardTitle className="text-lg">Support this App</CardTitle>
           <ZapButton
             recipientPubkey={event.pubkey}
             eventId={event.id}
@@ -31,8 +31,8 @@ export function ZapCustomNip({ event, className }: ZapCustomNipProps) {
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">
-          Send lightning zaps to support the author of this custom NIP. Zaps help incentivize 
-          quality contributions to the Nostr ecosystem.
+          Send lightning zaps to support the developer of this app. Your contributions help 
+          fund continued development and improvements.
         </p>
         
         <Separator />
@@ -50,7 +50,7 @@ export function ZapCustomNip({ event, className }: ZapCustomNipProps) {
 }
 
 // Compact version for use in cards
-export function ZapCustomNipCompact({ event }: { event: NostrEvent }) {
+export function ZapAppCompact({ event }: { event: NostrEvent }) {
   const dTag = event.tags.find((tag: string[]) => tag[0] === 'd')?.[1] || '';
   const eventCoordinate = `${event.kind}:${event.pubkey}:${dTag}`;
   

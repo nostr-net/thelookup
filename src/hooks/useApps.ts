@@ -9,6 +9,7 @@ export interface AppInfo {
   about?: string;
   picture?: string;
   website?: string;
+  lud16?: string;
   supportedKinds: number[];
   webHandlers: Array<{
     url: string;
@@ -83,6 +84,7 @@ function parseAppEvent(event: NostrEvent): AppInfo {
     about: metadata.about as string | undefined,
     picture: metadata.picture as string | undefined,
     website: metadata.website as string | undefined,
+    lud16: metadata.lud16 as string | undefined,
     supportedKinds,
     webHandlers,
     iosHandlers,

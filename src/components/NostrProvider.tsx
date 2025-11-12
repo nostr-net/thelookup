@@ -35,6 +35,23 @@ const NostrProvider: React.FC<NostrProviderProps> = (props) => {
         return new NRelay1(url);
       },
       reqRouter(filters) {
+        // Check if this is a profile query (kind 0)
+        const isProfileQuery = filters.some(filter => 
+          filter.kinds?.includes(0) && filter.authors && filter.authors.length > 0
+        );
+
+        if (isProfileQuery) {
+          // Query multiple relays for profiles to improve discovery
+          const profileRelays = [
+            relayUrl.current,
+            'wss://relay.nostr.band',
+            'wss://relay.damus.io',
+            'wss://nos.lol',
+          ];
+          return new Map(profileRelays.map(url => [url, filters]));
+        }
+
+        // For all other queries, use only the selected relay
         return new Map([[relayUrl.current, filters]]);
       },
       eventRouter(_event: NostrEvent) {

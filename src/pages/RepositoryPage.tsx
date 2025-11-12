@@ -192,11 +192,7 @@ export default function RepositoryPage() {
 
   useSeoMeta({
     title: repoData ? getPageTitle(`${getRepositoryDisplayName(repoData)} | Repository`) : getPageTitle('Repository'),
-    description: getPageDescription('repository', {
-      repoName: repoData ? getRepositoryDisplayName(repoData) : 'this repository',
-      description: repoData?.description,
-      authorName
-    }),
+    description: getPageDescription(`${repoData ? getRepositoryDisplayName(repoData) : 'Repository'} by ${authorName}${repoData?.description ? ` - ${repoData.description}` : ''}`),
   });
 
   if (!decoded) {

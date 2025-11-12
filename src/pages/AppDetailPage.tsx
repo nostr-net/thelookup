@@ -17,6 +17,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { RelaySelector } from '@/components/RelaySelector';
 import { FlagDialog } from '@/components/FlagDialog';
 import { FlagStats } from '@/components/FlagStats';
+import { ZapApp } from '@/components/ZapApp';
 import {
   ExternalLink,
   Globe,
@@ -63,12 +64,12 @@ export default function AppDetailPage() {
   const authorMetadata = author.data?.metadata;
 
   // Get flagging data for this app
-  const { flagStats, canFlag, userFlag, isLoading: isFlagsLoading } = useAppFlags(app?.id || '', app?.pubkey || '');
+  const { flagStats, canFlag, userFlag, isLoading: _isFlagsLoading } = useAppFlags(app?.id || '', app?.pubkey || '');
 
   // Set SEO meta
   useSeoMeta({
     title: app ? getPageTitle(app.name || 'Nostr App') : getPageTitle('App Details'),
-    description: getPageDescription('app', { appName: app?.name || 'this app' }),
+    description: getPageDescription(`Discover ${app?.name || 'this app'} - a Nostr application`),
   });
   
   if (!nip19Param) {
@@ -272,6 +273,19 @@ export default function AppDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:items-stretch">
           {/* Main Content */}
           <div className="lg:col-span-2 flex flex-col space-y-6">
+            {/* Zap Support Card */}
+            <ZapApp 
+              event={{
+                id: app.id,
+                pubkey: app.pubkey,
+                created_at: app.createdAt,
+                kind: 31990,
+                tags: [['d', app.dTag]],
+                content: '',
+                sig: ''
+              }}
+            />
+
             {/* Supported Event Types */}
             <Card className="flex-1">
               <CardHeader>

@@ -17,7 +17,7 @@ export default function AppsByTagPage() {
 
   useSeoMeta({
     title: tag ? getPageTitle(`Apps tagged "${tag}"`) : getPageTitle('Apps by Tag'),
-    description: getPageDescription('apps-by-tag', { tag }),
+    description: getPageDescription(`Discover Nostr apps tagged with ${tag}`),
   });
 
   if (!tag) {

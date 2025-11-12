@@ -100,7 +100,7 @@ function OfficialNipView({ nipNumber }: { nipNumber: string }) {
 
   useSeoMeta({
     title: getPageTitle(`${title} | NIP-${nipNumber}`),
-    description: getPageDescription('official-nip', { title, nipNumber }),
+    description: getPageDescription(`${title} - Official Nostr Implementation Possibility (NIP-${nipNumber})`),
   });
 
   if (isLoading) {
@@ -305,10 +305,7 @@ function CustomNipView({ naddr, user }: { naddr: string; user: User | null }) {
 
   useSeoMeta({
     title: getPageTitle(`${title} | Custom NIP`),
-    description: getPageDescription('custom-nip', {
-      title,
-      content: event?.content
-    }),
+    description: getPageDescription(`${title} - Custom Nostr Implementation Possibility`),
   });
 
   const kinds = event?.tags.filter((tag) => tag[0] === 'k').map((tag) => tag[1]) || [];
