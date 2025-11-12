@@ -39,20 +39,12 @@ jobs:
 
       - name: Install dependencies and build
         env:
-          GITHUB_PAGES: true
-          VITE_GITHUB_PAGES: true
-          VITE_SITE_NAME: bitkarrot.github.io/thelookup
-          VITE_SITE_URL: https://bitkarrot.github.io/thelookup
-          VITE_SITE_DISPLAY_NAME: NostrHub
-          VITE_SECTIONS: ""
-          VITE_RELAY_URL: wss://relay.nostr.net
-          VITE_RELAY_NPUB: npub18pudjhdhhp2v8gxnkttt00um729nv93tuepjda2jrwn3eua5tf5s80a699
-          VITE_SUBMIT_APP_PAYMENT_ENABLED: ""
-          VITE_SUBMIT_APP_LIGHTNING_ADDRESS: ""
-          VITE_SUBMIT_APP_FEE: ""
-          VITE_ZAP_RECEIPT_RELAY: ""
+          # Provide Vite env vars so index.html placeholders resolve in CI
+          VITE_SITE_NAME: ${{ vars.VITE_SITE_NAME || 'nostr.net' }}
+          VITE_SITE_DISPLAY_NAME: ${{ vars.VITE_SITE_DISPLAY_NAME || 'nostr.net' }}
+          VITE_SITE_URL: ${{ vars.VITE_SITE_URL || format('https://{0}.github.io/{1}', github.repository_owner, github.event.repository.name) }}
         run: |
-          npm install
+          npm ci
           npm run build
           cp dist/index.html dist/404.html
 

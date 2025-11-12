@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNWC } from '@/hooks/useNWCContext';
-import type { WebLNProvider } from '@webbtc/webln-types';
+import type { WebLNProvider } from '@/types/webln';
 
 export function useWallet() {
   const [webln, setWebln] = useState<WebLNProvider | null>(null);
-  const { getActiveConnection, activeConnection } = useNWC();
+  const { getActiveConnection } = useNWC();
 
   useEffect(() => {
     // Check for WebLN provider
@@ -15,7 +15,7 @@ export function useWallet() {
 
   return {
     webln,
-    activeNWC: activeConnection,
+    // Consumers can call getActiveConnection() to retrieve current NWC connection
     getActiveConnection,
   };
 }

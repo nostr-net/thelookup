@@ -211,7 +211,7 @@ const Index = () => {
                                       <Badge
                                         key={eventKind.kind}
                                         variant="secondary"
-                                        className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 border-purple-300 dark:border-purple-700 hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors cursor-pointer"
+                                        className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 border-purple-300 dark:border-purple-700 hover:bg-purple-200 dark:hover:bg-purple-900/50 hover:bg-primary/20 transition-colors cursor-pointer"
                                         onClick={(e) => {
                                           e.preventDefault();
                                           e.stopPropagation();

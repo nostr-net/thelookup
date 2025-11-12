@@ -6,8 +6,15 @@ import react from "@vitejs/plugin-react-swc";
 import { defineConfig } from "vitest/config";
 
 // https://vitejs.dev/config/
-export default defineConfig(() => ({
-  base: process.env.GITHUB_PAGES ? '/thelookup/' : '/',
+export default defineConfig(() => {
+  const repo = process.env.GITHUB_REPOSITORY?.split("/")[1];
+  const isCI = !!process.env.GITHUB_ACTIONS;
+  const base = isCI && repo
+    ? (repo.endsWith('.github.io') ? '/' : `/${repo}/`)
+    : "/";
+
+  return ({
+  base,
   server: {
     host: "::",
     port: 8080,
@@ -139,4 +146,5 @@ export default defineConfig(() => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-}));
+  });
+});

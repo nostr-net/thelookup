@@ -27,14 +27,16 @@ export function AppListItem({ app }: AppListItemProps) {
     relays: [config.relayUrl],
   });
 
+  const displayName = app.name || app.dTag || 'App';
+
   return (
     <div className="flex items-center gap-4 p-4 border-b hover:bg-muted/50 transition-colors">
       {/* App Icon */}
       <div className="flex-shrink-0">
         <Avatar className="h-12 w-12">
-          <AvatarImage src={app.picture} alt={app.name || 'App'} />
+          <AvatarImage src={app.picture} alt={displayName} />
           <AvatarFallback className="text-lg">
-            {(app.name || 'App').slice(0, 2).toUpperCase()}
+            {displayName.slice(0, 2).toUpperCase()}
           </AvatarFallback>
         </Avatar>
       </div>
@@ -48,7 +50,7 @@ export function AppListItem({ app }: AppListItemProps) {
                 to={`/${naddr}`}
                 className="hover:underline"
               >
-                {app.name}
+                {displayName}
               </Link>
             </h3>
             {app.about && (

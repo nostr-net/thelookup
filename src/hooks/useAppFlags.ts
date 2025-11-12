@@ -42,7 +42,7 @@ export function useAppFlags(appEventId: string, appAuthorPubkey: string) {
     error
   } = useQuery<AppFlag[]>({
     queryKey: ['app-flags', appEventId],
-    queryFn: async () => {
+    queryFn: async (): Promise<AppFlag[]> => {
       if (!appEventId || !appAuthorPubkey) return [];
 
       // For now, return empty array since we're focusing on fixing the publishing issue
