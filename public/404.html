@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>NostrHub - Redirecting...</title>
+    <script>
+      // Single Page App redirect for GitHub Pages
+      // This script takes the current url and converts the path into a query string
+      // parameter which is then available to the React Router to parse and handle
+
+      // Get the base path from the URL (e.g., '/thelookup')
+      const pathSegments = window.location.pathname.split('/').filter(Boolean);
+      const basePath = '/' + (pathSegments[0] || '');
+
+      // Store the full path for the SPA to handle
+      sessionStorage.setItem('redirectPath', window.location.pathname + window.location.search + window.location.hash);
+
+      // Redirect to the base index.html
+      window.location.replace(basePath + '/');
+    </script>
+  </head>
+  <body>
+    <p>Redirecting...</p>
+  </body>
+</html>
