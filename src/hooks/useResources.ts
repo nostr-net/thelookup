@@ -13,7 +13,7 @@ export function useResources() {
         setError(null);
         
         // Fetch the RESOURCES.md file from the public directory
-        const response = await fetch('/RESOURCES.md');
+        const response = await fetch(`${import.meta.env.BASE_URL}RESOURCES.md`);
         
         if (!response.ok) {
           throw new Error(`Failed to load resources: ${response.status}`);
