@@ -11,6 +11,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NostrLoginProvider } from '@nostrify/react/login';
 import { AppProvider } from './components/AppProvider';
 import { AnimatedBackground } from './components/AnimatedBackground';
+import { PlausibleAnalytics } from './components/PlausibleAnalytics';
 import { NWCProvider } from './contexts/NWCContext';
 import AppRouter from './AppRouter';
 
@@ -41,6 +42,7 @@ export function App() {
                 <TooltipProvider>
                 {/* <AnimatedBackground /> */}
                 <Toaster />
+                <PlausibleAnalytics />
                 <Suspense>
                   <AppRouter />
                 </Suspense>
