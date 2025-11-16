@@ -40,8 +40,9 @@ export function useRepositories() {
   const query = useQuery({
     queryKey: ['repositories'],
     queryFn: async (c) => {
-      const signal = AbortSignal.any([c.signal, AbortSignal.timeout(5000)]);
-      const events = await nostr.query([{ kinds: [30617], limit: 100 }], { signal });
+      const signal = AbortSignal.any([c.signal, AbortSignal.timeout(10000)]);
+      // Fetch a larger initial batch to reduce missing events
+      const events = await nostr.query([{ kinds: [30617], limit: 500 }], { signal });
 
       // Filter events through validator to ensure they meet NIP-34 requirements
       return events.filter(validateRepositoryEvent);
@@ -49,46 +50,78 @@ export function useRepositories() {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  // Background fetching to get all events
+  // Background fetching to get ALL events comprehensively
   useEffect(() => {
-    if (!query.data || query.data.length === 0 || fetchingRef.current) return;
+    if (!query.data || fetchingRef.current) return;
 
     fetchingRef.current = true;
 
     const fetchAllInBackground = async () => {
       try {
         const allEvents: NostrEvent[] = [...query.data];
-        let oldestTimestamp = Math.min(...allEvents.map(e => e.created_at));
-        const BATCH_SIZE = 100;
-        const MAX_BATCHES = 20; // Limit to prevent infinite loops
-        let batchCount = 0;
+        const seenIds = new Set(allEvents.map(e => e.id));
 
-        while (batchCount < MAX_BATCHES) {
-          const signal = AbortSignal.timeout(5000);
-          const batch = await nostr.query(
-            [{ kinds: [30617], until: oldestTimestamp, limit: BATCH_SIZE }],
+        // Strategy 1: Fetch older events
+        if (allEvents.length > 0) {
+          let oldestTimestamp = Math.min(...allEvents.map(e => e.created_at));
+          const BATCH_SIZE = 200;
+          let oldBatchCount = 0;
+          const MAX_OLD_BATCHES = 15;
+
+          while (oldBatchCount < MAX_OLD_BATCHES) {
+            const signal = AbortSignal.timeout(8000);
+            const batch = await nostr.query(
+              [{ kinds: [30617], until: oldestTimestamp - 1, limit: BATCH_SIZE }],
+              { signal }
+            );
+
+            if (batch.length === 0) break;
+
+            const newEvents = batch
+              .filter(e => !seenIds.has(e.id))
+              .filter(validateRepositoryEvent);
+
+            if (newEvents.length === 0) break;
+
+            newEvents.forEach(e => {
+              allEvents.push(e);
+              seenIds.add(e.id);
+            });
+
+            oldestTimestamp = Math.min(...newEvents.map(e => e.created_at));
+            oldBatchCount++;
+
+            // Update cache incrementally
+            queryClient.setQueryData(['repositories'], [...allEvents]);
+            await new Promise(resolve => setTimeout(resolve, 100));
+          }
+        }
+
+        // Strategy 2: Fetch without time constraints to catch any missed events
+        try {
+          const signal = AbortSignal.timeout(10000);
+          const allBatch = await nostr.query(
+            [{ kinds: [30617], limit: 1000 }],
             { signal }
           );
 
-          if (batch.length === 0) break;
-
-          // Filter out duplicates and validate
-          const newEvents = batch
-            .filter(e => !allEvents.some(existing => existing.id === e.id))
+          const missedEvents = allBatch
+            .filter(e => !seenIds.has(e.id))
             .filter(validateRepositoryEvent);
 
-          if (newEvents.length === 0) break;
+          if (missedEvents.length > 0) {
+            missedEvents.forEach(e => {
+              allEvents.push(e);
+              seenIds.add(e.id);
+            });
 
-          allEvents.push(...newEvents);
-          oldestTimestamp = Math.min(...newEvents.map(e => e.created_at));
-          batchCount++;
-
-          // Update cache with new events
-          queryClient.setQueryData(['repositories'], allEvents);
-
-          // Small delay between batches to avoid overwhelming the relay
-          await new Promise(resolve => setTimeout(resolve, 100));
+            // Final update with all events
+            queryClient.setQueryData(['repositories'], [...allEvents]);
+          }
+        } catch (err) {
+          console.log('Failed to fetch comprehensive batch:', err);
         }
+
       } catch (error) {
         console.error('Background fetch error:', error);
       } finally {

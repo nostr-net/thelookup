@@ -74,8 +74,8 @@ export function useWikiArticles() {
   const query = useQuery({
     queryKey: ['wiki-articles'],
     queryFn: async (c) => {
-      const signal = AbortSignal.any([c.signal, AbortSignal.timeout(5000)]);
-      const events = await nostr.query([{ kinds: [30818], limit: 100 }], { signal });
+      const signal = AbortSignal.any([c.signal, AbortSignal.timeout(10000)]);
+      const events = await nostr.query([{ kinds: [30818], limit: 300 }], { signal });
 
       // Filter and validate events
       const validEvents = events.filter(validateWikiArticleEvent);
@@ -89,48 +89,82 @@ export function useWikiArticles() {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  // Background fetching to get all events
+  // Background fetching to get ALL events comprehensively
   useEffect(() => {
-    if (!query.data || query.data.length === 0 || fetchingRef.current) return;
+    if (!query.data || fetchingRef.current) return;
 
     fetchingRef.current = true;
 
     const fetchAllInBackground = async () => {
       try {
         const allArticles: WikiArticleInfo[] = [...query.data];
-        let oldestTimestamp = Math.min(...allArticles.map(a => a.createdAt));
-        const BATCH_SIZE = 100;
-        const MAX_BATCHES = 20; // Limit to prevent infinite loops
-        let batchCount = 0;
+        const seenIds = new Set(allArticles.map(a => a.id));
 
-        while (batchCount < MAX_BATCHES) {
-          const signal = AbortSignal.timeout(5000);
-          const batch = await nostr.query(
-            [{ kinds: [30818], until: oldestTimestamp, limit: BATCH_SIZE }],
+        // Strategy 1: Fetch older events
+        if (allArticles.length > 0) {
+          let oldestTimestamp = Math.min(...allArticles.map(a => a.createdAt));
+          const BATCH_SIZE = 200;
+          let oldBatchCount = 0;
+          const MAX_OLD_BATCHES = 15;
+
+          while (oldBatchCount < MAX_OLD_BATCHES) {
+            const signal = AbortSignal.timeout(8000);
+            const batch = await nostr.query(
+              [{ kinds: [30818], until: oldestTimestamp - 1, limit: BATCH_SIZE }],
+              { signal }
+            );
+
+            if (batch.length === 0) break;
+
+            const newEvents = batch
+              .filter(e => !seenIds.has(e.id))
+              .filter(validateWikiArticleEvent);
+
+            if (newEvents.length === 0) break;
+
+            const newArticles = newEvents.map(parseWikiArticleEvent);
+            newArticles.forEach(article => {
+              allArticles.push(article);
+              seenIds.add(article.id);
+            });
+
+            oldestTimestamp = Math.min(...newArticles.map(a => a.createdAt));
+            oldBatchCount++;
+
+            // Sort and update cache
+            allArticles.sort((a, b) => b.createdAt - a.createdAt);
+            queryClient.setQueryData(['wiki-articles'], [...allArticles]);
+            await new Promise(resolve => setTimeout(resolve, 100));
+          }
+        }
+
+        // Strategy 2: Fetch without time constraints to catch any missed events
+        try {
+          const signal = AbortSignal.timeout(10000);
+          const comprehensiveBatch = await nostr.query(
+            [{ kinds: [30818], limit: 1000 }],
             { signal }
           );
 
-          if (batch.length === 0) break;
-
-          // Filter out duplicates and validate
-          const newEvents = batch
-            .filter(e => !allArticles.some(existing => existing.id === e.id))
+          const missedEvents = comprehensiveBatch
+            .filter(e => !seenIds.has(e.id))
             .filter(validateWikiArticleEvent);
 
-          if (newEvents.length === 0) break;
+          if (missedEvents.length > 0) {
+            const missedArticles = missedEvents.map(parseWikiArticleEvent);
+            missedArticles.forEach(article => {
+              allArticles.push(article);
+              seenIds.add(article.id);
+            });
 
-          const newArticles = newEvents.map(parseWikiArticleEvent);
-          allArticles.push(...newArticles);
-          oldestTimestamp = Math.min(...newArticles.map(a => a.createdAt));
-          batchCount++;
-
-          // Sort and update cache
-          allArticles.sort((a, b) => b.createdAt - a.createdAt);
-          queryClient.setQueryData(['wiki-articles'], allArticles);
-
-          // Small delay between batches to avoid overwhelming the relay
-          await new Promise(resolve => setTimeout(resolve, 100));
+            // Final sort and update
+            allArticles.sort((a, b) => b.createdAt - a.createdAt);
+            queryClient.setQueryData(['wiki-articles'], [...allArticles]);
+          }
+        } catch (err) {
+          console.log('Failed to fetch comprehensive batch:', err);
         }
+
       } catch (error) {
         console.error('Background fetch error:', error);
       } finally {
