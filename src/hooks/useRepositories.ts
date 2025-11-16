@@ -50,7 +50,7 @@ export function useRepositories() {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  // Background fetching to get ALL events comprehensively
+  // Background fetching to get ALL events without any time filtering
   useEffect(() => {
     if (!query.data || fetchingRef.current) return;
 
@@ -61,65 +61,35 @@ export function useRepositories() {
         const allEvents: NostrEvent[] = [...query.data];
         const seenIds = new Set(allEvents.map(e => e.id));
 
-        // Strategy 1: Fetch older events
-        if (allEvents.length > 0) {
-          let oldestTimestamp = Math.min(...allEvents.map(e => e.created_at));
-          const BATCH_SIZE = 200;
-          let oldBatchCount = 0;
-          const MAX_OLD_BATCHES = 15;
+        // Fetch ALL events without ANY time constraints - just get everything
+        try {
+          console.log('Fetching all repositories without time filtering...');
+          const signal = AbortSignal.timeout(15000);
 
-          while (oldBatchCount < MAX_OLD_BATCHES) {
-            const signal = AbortSignal.timeout(8000);
-            const batch = await nostr.query(
-              [{ kinds: [30617], until: oldestTimestamp - 1, limit: BATCH_SIZE }],
-              { signal }
-            );
+          // First batch - get up to 2000 events
+          const allBatch = await nostr.query(
+            [{ kinds: [30617], limit: 2000 }],
+            { signal }
+          );
 
-            if (batch.length === 0) break;
+          const newEvents = allBatch
+            .filter(e => !seenIds.has(e.id))
+            .filter(validateRepositoryEvent);
 
-            const newEvents = batch
-              .filter(e => !seenIds.has(e.id))
-              .filter(validateRepositoryEvent);
-
-            if (newEvents.length === 0) break;
-
+          if (newEvents.length > 0) {
+            console.log(`Found ${newEvents.length} additional events`);
             newEvents.forEach(e => {
               allEvents.push(e);
               seenIds.add(e.id);
             });
 
-            oldestTimestamp = Math.min(...newEvents.map(e => e.created_at));
-            oldBatchCount++;
-
-            // Update cache incrementally
-            queryClient.setQueryData(['repositories'], [...allEvents]);
-            await new Promise(resolve => setTimeout(resolve, 100));
-          }
-        }
-
-        // Strategy 2: Fetch without time constraints to catch any missed events
-        try {
-          const signal = AbortSignal.timeout(10000);
-          const allBatch = await nostr.query(
-            [{ kinds: [30617], limit: 1000 }],
-            { signal }
-          );
-
-          const missedEvents = allBatch
-            .filter(e => !seenIds.has(e.id))
-            .filter(validateRepositoryEvent);
-
-          if (missedEvents.length > 0) {
-            missedEvents.forEach(e => {
-              allEvents.push(e);
-              seenIds.add(e.id);
-            });
-
-            // Final update with all events
+            // Update cache with all events
             queryClient.setQueryData(['repositories'], [...allEvents]);
           }
+
+          console.log(`Total repositories loaded: ${allEvents.length}`);
         } catch (err) {
-          console.log('Failed to fetch comprehensive batch:', err);
+          console.log('Failed to fetch all events:', err);
         }
 
       } catch (error) {

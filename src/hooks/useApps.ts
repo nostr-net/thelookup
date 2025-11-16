@@ -124,7 +124,7 @@ export function useApps() {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  // Background fetching to get ALL events comprehensively
+  // Background fetching to get ALL events without any time filtering
   useEffect(() => {
     if (!query.data || fetchingRef.current) return;
 
@@ -135,69 +135,36 @@ export function useApps() {
         const allApps: AppInfo[] = [...query.data];
         const seenIds = new Set(allApps.map(a => a.id));
 
-        // Strategy 1: Fetch older events
-        if (allApps.length > 0) {
-          let oldestTimestamp = Math.min(...allApps.map(a => a.createdAt));
-          const BATCH_SIZE = 200;
-          let oldBatchCount = 0;
-          const MAX_OLD_BATCHES = 15;
+        // Fetch ALL apps without ANY time constraints
+        try {
+          console.log('Fetching all apps without time filtering...');
+          const signal = AbortSignal.timeout(15000);
 
-          while (oldBatchCount < MAX_OLD_BATCHES) {
-            const signal = AbortSignal.timeout(8000);
-            const batch = await nostr.query(
-              [{ kinds: [31990], until: oldestTimestamp - 1, limit: BATCH_SIZE }],
-              { signal }
-            );
+          const comprehensiveBatch = await nostr.query(
+            [{ kinds: [31990], limit: 2000 }],
+            { signal }
+          );
 
-            if (batch.length === 0) break;
+          const newEvents = comprehensiveBatch
+            .filter(e => !seenIds.has(e.id))
+            .filter(validateAppEvent);
 
-            const newEvents = batch
-              .filter(e => !seenIds.has(e.id))
-              .filter(validateAppEvent);
-
-            if (newEvents.length === 0) break;
-
+          if (newEvents.length > 0) {
+            console.log(`Found ${newEvents.length} additional apps`);
             const newApps = newEvents.map(parseAppEvent);
             newApps.forEach(app => {
               allApps.push(app);
               seenIds.add(app.id);
             });
 
-            oldestTimestamp = Math.min(...newApps.map(a => a.createdAt));
-            oldBatchCount++;
-
-            // Sort and update cache
-            allApps.sort((a, b) => b.createdAt - a.createdAt);
-            queryClient.setQueryData(['apps'], [...allApps]);
-            await new Promise(resolve => setTimeout(resolve, 100));
-          }
-        }
-
-        // Strategy 2: Fetch without time constraints to catch any missed events
-        try {
-          const signal = AbortSignal.timeout(10000);
-          const comprehensiveBatch = await nostr.query(
-            [{ kinds: [31990], limit: 1000 }],
-            { signal }
-          );
-
-          const missedEvents = comprehensiveBatch
-            .filter(e => !seenIds.has(e.id))
-            .filter(validateAppEvent);
-
-          if (missedEvents.length > 0) {
-            const missedApps = missedEvents.map(parseAppEvent);
-            missedApps.forEach(app => {
-              allApps.push(app);
-              seenIds.add(app.id);
-            });
-
-            // Final sort and update
+            // Sort and update
             allApps.sort((a, b) => b.createdAt - a.createdAt);
             queryClient.setQueryData(['apps'], [...allApps]);
           }
+
+          console.log(`Total apps loaded: ${allApps.length}`);
         } catch (err) {
-          console.log('Failed to fetch comprehensive batch:', err);
+          console.log('Failed to fetch all apps:', err);
         }
 
       } catch (error) {

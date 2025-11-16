@@ -24,6 +24,7 @@ import DVMPage from "./pages/DVMPage";
 import NotFound from "./pages/NotFound";
 import IssuePage from "./pages/IssuePage";
 import SearchPage from "./pages/SearchPage";
+import DebugPage from "./pages/DebugPage";
 
 export function AppRouter() {
   const basename = (import.meta.env.BASE_URL || "/").replace(/\/$/, "");
@@ -51,6 +52,7 @@ export function AppRouter() {
         <Route path="/repositories/:nip19/patches/:patchId" element={<PatchPage />} />
         <Route path="/dvm" element={<DVMPage />} />
         <Route path="/search" element={<SearchPage />} />
+        <Route path="/debug" element={<DebugPage />} />
         <Route path="/kind/:k" element={<KindPage />} />
         <Route path="/:nip19" element={<Nip19Page />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

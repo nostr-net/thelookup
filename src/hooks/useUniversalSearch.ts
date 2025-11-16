@@ -45,17 +45,18 @@ export function useUniversalSearch(options: SearchOptions) {
   return useQuery({
     queryKey: ['universal-search', options],
     queryFn: async (c) => {
-      const signal = AbortSignal.any([c.signal, AbortSignal.timeout(5000)]);
+      const signal = AbortSignal.any([c.signal, AbortSignal.timeout(15000)]);
 
       // Build queries based on selected types
       const queries: Promise<NostrEvent[]>[] = [];
 
       if (options.filters.types.includes('app')) {
-        queries.push(nostr.query([{ kinds: [31990], limit: 100 }], { signal }));
+        queries.push(nostr.query([{ kinds: [31990], limit: 500 }], { signal }));
       }
 
       if (options.filters.types.includes('repository')) {
-        queries.push(nostr.query([{ kinds: [30617], limit: 100 }], { signal }));
+        // Fetch more to ensure we get all repos including those with future timestamps
+        queries.push(nostr.query([{ kinds: [30617], limit: 1000 }], { signal }));
       }
 
       // If no types selected, return empty
@@ -117,7 +118,7 @@ export function useAllSearchTags() {
   const { data: allResults } = useQuery({
     queryKey: ['all-search-tags'],
     queryFn: async (c) => {
-      const signal = AbortSignal.any([c.signal, AbortSignal.timeout(5000)]);
+      const signal = AbortSignal.any([c.signal, AbortSignal.timeout(15000)]);
 
       // Fetch both apps and repos
       const [appEvents, repoEvents] = await Promise.all([

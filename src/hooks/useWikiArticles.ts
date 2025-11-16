@@ -89,7 +89,7 @@ export function useWikiArticles() {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  // Background fetching to get ALL events comprehensively
+  // Background fetching to get ALL events without any time filtering
   useEffect(() => {
     if (!query.data || fetchingRef.current) return;
 
@@ -100,69 +100,36 @@ export function useWikiArticles() {
         const allArticles: WikiArticleInfo[] = [...query.data];
         const seenIds = new Set(allArticles.map(a => a.id));
 
-        // Strategy 1: Fetch older events
-        if (allArticles.length > 0) {
-          let oldestTimestamp = Math.min(...allArticles.map(a => a.createdAt));
-          const BATCH_SIZE = 200;
-          let oldBatchCount = 0;
-          const MAX_OLD_BATCHES = 15;
+        // Fetch ALL wiki articles without ANY time constraints
+        try {
+          console.log('Fetching all wiki articles without time filtering...');
+          const signal = AbortSignal.timeout(15000);
 
-          while (oldBatchCount < MAX_OLD_BATCHES) {
-            const signal = AbortSignal.timeout(8000);
-            const batch = await nostr.query(
-              [{ kinds: [30818], until: oldestTimestamp - 1, limit: BATCH_SIZE }],
-              { signal }
-            );
+          const comprehensiveBatch = await nostr.query(
+            [{ kinds: [30818], limit: 2000 }],
+            { signal }
+          );
 
-            if (batch.length === 0) break;
+          const newEvents = comprehensiveBatch
+            .filter(e => !seenIds.has(e.id))
+            .filter(validateWikiArticleEvent);
 
-            const newEvents = batch
-              .filter(e => !seenIds.has(e.id))
-              .filter(validateWikiArticleEvent);
-
-            if (newEvents.length === 0) break;
-
+          if (newEvents.length > 0) {
+            console.log(`Found ${newEvents.length} additional wiki articles`);
             const newArticles = newEvents.map(parseWikiArticleEvent);
             newArticles.forEach(article => {
               allArticles.push(article);
               seenIds.add(article.id);
             });
 
-            oldestTimestamp = Math.min(...newArticles.map(a => a.createdAt));
-            oldBatchCount++;
-
-            // Sort and update cache
-            allArticles.sort((a, b) => b.createdAt - a.createdAt);
-            queryClient.setQueryData(['wiki-articles'], [...allArticles]);
-            await new Promise(resolve => setTimeout(resolve, 100));
-          }
-        }
-
-        // Strategy 2: Fetch without time constraints to catch any missed events
-        try {
-          const signal = AbortSignal.timeout(10000);
-          const comprehensiveBatch = await nostr.query(
-            [{ kinds: [30818], limit: 1000 }],
-            { signal }
-          );
-
-          const missedEvents = comprehensiveBatch
-            .filter(e => !seenIds.has(e.id))
-            .filter(validateWikiArticleEvent);
-
-          if (missedEvents.length > 0) {
-            const missedArticles = missedEvents.map(parseWikiArticleEvent);
-            missedArticles.forEach(article => {
-              allArticles.push(article);
-              seenIds.add(article.id);
-            });
-
-            // Final sort and update
+            // Sort and update
             allArticles.sort((a, b) => b.createdAt - a.createdAt);
             queryClient.setQueryData(['wiki-articles'], [...allArticles]);
           }
+
+          console.log(`Total wiki articles loaded: ${allArticles.length}`);
         } catch (err) {
-          console.log('Failed to fetch comprehensive batch:', err);
+          console.log('Failed to fetch all wiki articles:', err);
         }
 
       } catch (error) {
