@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNostr } from '@nostrify/react';
 import type { NostrEvent, NostrSigner } from '@nostrify/nostrify';
 import { getClientTag } from '@/lib/siteConfig';
+import { useEffect, useRef } from 'react';
 
 /**
  * Validates a NIP-34 repository announcement event
@@ -29,21 +30,76 @@ function validateRepositoryEvent(event: NostrEvent): boolean {
 }
 
 /**
- * Hook to fetch all repository announcements
+ * Hook to fetch all repository announcements with background batch fetching
  */
 export function useRepositories() {
   const { nostr } = useNostr();
+  const queryClient = useQueryClient();
+  const fetchingRef = useRef(false);
 
-  return useQuery({
+  const query = useQuery({
     queryKey: ['repositories'],
     queryFn: async (c) => {
       const signal = AbortSignal.any([c.signal, AbortSignal.timeout(5000)]);
-      const events = await nostr.query([{ kinds: [30617], limit: 50 }], { signal });
+      const events = await nostr.query([{ kinds: [30617], limit: 100 }], { signal });
 
       // Filter events through validator to ensure they meet NIP-34 requirements
       return events.filter(validateRepositoryEvent);
     },
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
+
+  // Background fetching to get all events
+  useEffect(() => {
+    if (!query.data || query.data.length === 0 || fetchingRef.current) return;
+
+    fetchingRef.current = true;
+
+    const fetchAllInBackground = async () => {
+      try {
+        const allEvents: NostrEvent[] = [...query.data];
+        let oldestTimestamp = Math.min(...allEvents.map(e => e.created_at));
+        const BATCH_SIZE = 100;
+        const MAX_BATCHES = 20; // Limit to prevent infinite loops
+        let batchCount = 0;
+
+        while (batchCount < MAX_BATCHES) {
+          const signal = AbortSignal.timeout(5000);
+          const batch = await nostr.query(
+            [{ kinds: [30617], until: oldestTimestamp, limit: BATCH_SIZE }],
+            { signal }
+          );
+
+          if (batch.length === 0) break;
+
+          // Filter out duplicates and validate
+          const newEvents = batch
+            .filter(e => !allEvents.some(existing => existing.id === e.id))
+            .filter(validateRepositoryEvent);
+
+          if (newEvents.length === 0) break;
+
+          allEvents.push(...newEvents);
+          oldestTimestamp = Math.min(...newEvents.map(e => e.created_at));
+          batchCount++;
+
+          // Update cache with new events
+          queryClient.setQueryData(['repositories'], allEvents);
+
+          // Small delay between batches to avoid overwhelming the relay
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      } catch (error) {
+        console.error('Background fetch error:', error);
+      } finally {
+        fetchingRef.current = false;
+      }
+    };
+
+    fetchAllInBackground();
+  }, [query.data, nostr, queryClient]);
+
+  return query;
 }
 
 /**

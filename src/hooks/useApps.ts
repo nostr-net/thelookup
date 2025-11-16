@@ -1,6 +1,7 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNostr } from '@nostrify/react';
 import type { NostrEvent } from '@nostrify/nostrify';
+import { useEffect, useRef } from 'react';
 
 export interface AppInfo {
   id: string;
@@ -40,7 +41,7 @@ function validateAppEvent(event: NostrEvent): boolean {
 
 function parseAppEvent(event: NostrEvent): AppInfo {
   const dTag = event.tags.find(([name]) => name === 'd')?.[1] || '';
-  
+
   // Parse supported kinds from 'k' tags
   const supportedKinds = event.tags
     .filter(([name]) => name === 'k')
@@ -98,12 +99,14 @@ function parseAppEvent(event: NostrEvent): AppInfo {
 
 export function useApps() {
   const { nostr } = useNostr();
+  const queryClient = useQueryClient();
+  const fetchingRef = useRef(false);
 
-  return useQuery({
+  const query = useQuery({
     queryKey: ['apps'],
     queryFn: async (c) => {
       const signal = AbortSignal.any([c.signal, AbortSignal.timeout(5000)]);
-      
+
       const events = await nostr.query(
         [{ kinds: [31990], limit: 100 }],
         { signal }
@@ -111,15 +114,69 @@ export function useApps() {
 
       // Filter and validate events
       const validEvents = events.filter(validateAppEvent);
-      
+
       // Parse events into app info
       const apps = validEvents.map(parseAppEvent);
-      
+
       // Sort by creation date (newest first)
       return apps.sort((a, b) => b.createdAt - a.createdAt);
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
+
+  // Background fetching to get all events
+  useEffect(() => {
+    if (!query.data || query.data.length === 0 || fetchingRef.current) return;
+
+    fetchingRef.current = true;
+
+    const fetchAllInBackground = async () => {
+      try {
+        const allApps: AppInfo[] = [...query.data];
+        let oldestTimestamp = Math.min(...allApps.map(a => a.createdAt));
+        const BATCH_SIZE = 100;
+        const MAX_BATCHES = 20; // Limit to prevent infinite loops
+        let batchCount = 0;
+
+        while (batchCount < MAX_BATCHES) {
+          const signal = AbortSignal.timeout(5000);
+          const batch = await nostr.query(
+            [{ kinds: [31990], until: oldestTimestamp, limit: BATCH_SIZE }],
+            { signal }
+          );
+
+          if (batch.length === 0) break;
+
+          // Filter out duplicates and validate
+          const newEvents = batch
+            .filter(e => !allApps.some(existing => existing.id === e.id))
+            .filter(validateAppEvent);
+
+          if (newEvents.length === 0) break;
+
+          const newApps = newEvents.map(parseAppEvent);
+          allApps.push(...newApps);
+          oldestTimestamp = Math.min(...newApps.map(a => a.createdAt));
+          batchCount++;
+
+          // Sort and update cache
+          allApps.sort((a, b) => b.createdAt - a.createdAt);
+          queryClient.setQueryData(['apps'], allApps);
+
+          // Small delay between batches to avoid overwhelming the relay
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      } catch (error) {
+        console.error('Background fetch error:', error);
+      } finally {
+        fetchingRef.current = false;
+      }
+    };
+
+    fetchAllInBackground();
+  }, [query.data, nostr, queryClient]);
+
+  return query;
 }
 
 export function useAppsByKind(kind: number) {

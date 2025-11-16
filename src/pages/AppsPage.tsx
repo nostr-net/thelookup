@@ -3,6 +3,7 @@ import { useState, useMemo } from 'react';
 import { Layout } from '@/components/Layout';
 import { FeaturedApps } from '@/components/FeaturedApps';
 import { useApps } from '@/hooks/useApps';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import { AppCard } from '@/components/AppCard';
 import { AppCardSkeleton } from '@/components/AppCardSkeleton';
 import { AppListItem } from '@/components/AppListItem';
@@ -64,6 +65,15 @@ export default function AppsPage() {
 
   const totalApps = filteredApps.length;
   const totalKinds = new Set(filteredApps.flatMap(app => app.supportedKinds)).size;
+
+  // Infinite scroll for smooth rendering
+  const { displayCount, observerTarget, hasMore } = useInfiniteScroll({
+    totalItems: filteredApps.length,
+    initialItems: 20,
+    itemsPerBatch: 20,
+  });
+
+  const displayedApps = filteredApps.slice(0, displayCount);
 
   return (
     <Layout>
@@ -275,21 +285,32 @@ export default function AppsPage() {
                 </div>
 
                 {/* Conditional Rendering based on viewMode */}
-                {viewMode === 'cards' ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 mt-6">
-                    {filteredApps.map((app) => (
-                      <AppCard key={app.id} app={app} className="sm:rounded-lg rounded-none" />
-                    ))}
-                  </div>
-                ) : (
-                  <Card className="sm:rounded-lg rounded-none mt-6">
-                    <div className="divide-y">
-                      {filteredApps.map((app) => (
-                        <AppListItem key={app.id} app={app} />
+                <>
+                  {viewMode === 'cards' ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 mt-6">
+                      {displayedApps.map((app) => (
+                        <AppCard key={app.id} app={app} className="sm:rounded-lg rounded-none" />
                       ))}
                     </div>
-                  </Card>
-                )}
+                  ) : (
+                    <Card className="sm:rounded-lg rounded-none mt-6">
+                      <div className="divide-y">
+                        {displayedApps.map((app) => (
+                          <AppListItem key={app.id} app={app} />
+                        ))}
+                      </div>
+                    </Card>
+                  )}
+
+                  {/* Infinite scroll sentinel */}
+                  {hasMore && (
+                    <div ref={observerTarget} className="py-8 flex justify-center">
+                      <div className="text-sm text-muted-foreground">
+                        Loading more apps...
+                      </div>
+                    </div>
+                  )}
+                </>
               </>
             ) : (
               <div className="mt-6">

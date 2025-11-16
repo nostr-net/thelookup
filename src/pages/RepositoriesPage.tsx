@@ -6,6 +6,7 @@ import { RepositoryListItem } from '@/components/RepositoryListItem';
 import { RepositoryCardSkeleton } from '@/components/RepositoryCardSkeleton';
 import { RelaySelector } from '@/components/RelaySelector';
 import { useRepositories } from '@/hooks/useRepositories';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -48,7 +49,7 @@ export default function RepositoriesPage() {
 
   // Filter repositories based on search and tag
   const filteredRepos = parsedRepos.filter(repo => {
-    const matchesSearch = !searchQuery || 
+    const matchesSearch = !searchQuery ||
       getRepositoryDisplayName(repo.data).toLowerCase().includes(searchQuery.toLowerCase()) ||
       repo.data.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       repo.data.tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -57,6 +58,15 @@ export default function RepositoriesPage() {
 
     return matchesSearch && matchesTag;
   });
+
+  // Infinite scroll for smooth rendering
+  const { displayCount, observerTarget, hasMore } = useInfiniteScroll({
+    totalItems: filteredRepos.length,
+    initialItems: 20,
+    itemsPerBatch: 20,
+  });
+
+  const displayedRepos = filteredRepos.slice(0, displayCount);
 
   return (
     <Layout>
@@ -236,18 +246,29 @@ export default function RepositoriesPage() {
             </Card>
           </div>
         ) : (
-          <div className={viewMode === 'cards'
-            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 mt-6"
-            : "mt-6"
-          }>
-            {filteredRepos.map(({ event }) =>
-              viewMode === 'cards' ? (
-                <RepositoryCard key={event.id} event={event} className="sm:rounded-lg rounded-none" />
-              ) : (
-                <RepositoryListItem key={event.id} event={event} />
-              )
+          <>
+            <div className={viewMode === 'cards'
+              ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 mt-6"
+              : "mt-6"
+            }>
+              {displayedRepos.map(({ event }) =>
+                viewMode === 'cards' ? (
+                  <RepositoryCard key={event.id} event={event} className="sm:rounded-lg rounded-none" />
+                ) : (
+                  <RepositoryListItem key={event.id} event={event} />
+                )
+              )}
+            </div>
+
+            {/* Infinite scroll sentinel */}
+            {hasMore && (
+              <div ref={observerTarget} className="py-8 flex justify-center">
+                <div className="text-sm text-muted-foreground">
+                  Loading more repositories...
+                </div>
+              </div>
             )}
-          </div>
+          </>
         )}
       </div>
     </Layout>
