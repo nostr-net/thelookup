@@ -105,10 +105,11 @@ export function useApps() {
   const query = useQuery({
     queryKey: ['apps'],
     queryFn: async (c) => {
-      const signal = AbortSignal.any([c.signal, AbortSignal.timeout(10000)]);
+      const signal = AbortSignal.any([c.signal, AbortSignal.timeout(5000)]);
 
+      // Fetch only 15 initially for instant page load
       const events = await nostr.query(
-        [{ kinds: [31990], limit: 300 }],
+        [{ kinds: [31990], limit: 15 }],
         { signal }
       );
 
@@ -124,7 +125,7 @@ export function useApps() {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  // Background fetching to get ALL events without any time filtering
+  // Background fetching to get ALL events through progressive loading
   useEffect(() => {
     if (!query.data || fetchingRef.current) return;
 
@@ -135,37 +136,54 @@ export function useApps() {
         const allApps: AppInfo[] = [...query.data];
         const seenIds = new Set(allApps.map(a => a.id));
 
-        // Fetch ALL apps without ANY time constraints
-        try {
-          console.log('Fetching all apps without time filtering...');
-          const signal = AbortSignal.timeout(15000);
+        // Progressive fetching strategy: fetch increasingly large batches
+        const limits = [1000, 2000, 5000, 10000];
 
-          const comprehensiveBatch = await nostr.query(
-            [{ kinds: [31990], limit: 2000 }],
-            { signal }
-          );
+        for (const limit of limits) {
+          try {
+            console.log(`Fetching apps with limit ${limit}...`);
+            const signal = AbortSignal.timeout(20000);
 
-          const newEvents = comprehensiveBatch
-            .filter(e => !seenIds.has(e.id))
-            .filter(validateAppEvent);
+            const batch = await nostr.query(
+              [{ kinds: [31990], limit }],
+              { signal }
+            );
 
-          if (newEvents.length > 0) {
-            console.log(`Found ${newEvents.length} additional apps`);
-            const newApps = newEvents.map(parseAppEvent);
-            newApps.forEach(app => {
-              allApps.push(app);
-              seenIds.add(app.id);
+            let newEventCount = 0;
+            const newApps: AppInfo[] = [];
+
+            batch.forEach(event => {
+              if (!seenIds.has(event.id) && validateAppEvent(event)) {
+                const app = parseAppEvent(event);
+                allApps.push(app);
+                newApps.push(app);
+                seenIds.add(event.id);
+                newEventCount++;
+              }
             });
 
-            // Sort and update
-            allApps.sort((a, b) => b.createdAt - a.createdAt);
-            queryClient.setQueryData(['apps'], [...allApps]);
-          }
+            console.log(`Found ${newEventCount} new apps in batch of ${batch.length}`);
 
-          console.log(`Total apps loaded: ${allApps.length}`);
-        } catch (err) {
-          console.log('Failed to fetch all apps:', err);
+            // Update cache after each batch
+            if (newEventCount > 0) {
+              allApps.sort((a, b) => b.createdAt - a.createdAt);
+              queryClient.setQueryData(['apps'], [...allApps]);
+            }
+
+            // If we got fewer events than the limit, we likely have everything
+            if (batch.length < limit * 0.9) {
+              console.log(`Got ${batch.length} events with limit ${limit}, stopping`);
+              break;
+            }
+
+            // Small delay between batches
+            await new Promise(resolve => setTimeout(resolve, 200));
+          } catch (err) {
+            console.log(`Failed to fetch with limit ${limit}:`, err);
+          }
         }
+
+        console.log(`Total apps loaded: ${allApps.length}`);
 
       } catch (error) {
         console.error('Background fetch error:', error);

@@ -74,8 +74,9 @@ export function useWikiArticles() {
   const query = useQuery({
     queryKey: ['wiki-articles'],
     queryFn: async (c) => {
-      const signal = AbortSignal.any([c.signal, AbortSignal.timeout(10000)]);
-      const events = await nostr.query([{ kinds: [30818], limit: 300 }], { signal });
+      const signal = AbortSignal.any([c.signal, AbortSignal.timeout(5000)]);
+      // Fetch only 15 initially for instant page load
+      const events = await nostr.query([{ kinds: [30818], limit: 15 }], { signal });
 
       // Filter and validate events
       const validEvents = events.filter(validateWikiArticleEvent);
@@ -89,7 +90,7 @@ export function useWikiArticles() {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  // Background fetching to get ALL events without any time filtering
+  // Background fetching to get ALL events through progressive loading
   useEffect(() => {
     if (!query.data || fetchingRef.current) return;
 
@@ -100,37 +101,54 @@ export function useWikiArticles() {
         const allArticles: WikiArticleInfo[] = [...query.data];
         const seenIds = new Set(allArticles.map(a => a.id));
 
-        // Fetch ALL wiki articles without ANY time constraints
-        try {
-          console.log('Fetching all wiki articles without time filtering...');
-          const signal = AbortSignal.timeout(15000);
+        // Progressive fetching strategy: fetch increasingly large batches
+        const limits = [1000, 2000, 5000, 10000];
 
-          const comprehensiveBatch = await nostr.query(
-            [{ kinds: [30818], limit: 2000 }],
-            { signal }
-          );
+        for (const limit of limits) {
+          try {
+            console.log(`Fetching wiki articles with limit ${limit}...`);
+            const signal = AbortSignal.timeout(20000);
 
-          const newEvents = comprehensiveBatch
-            .filter(e => !seenIds.has(e.id))
-            .filter(validateWikiArticleEvent);
+            const batch = await nostr.query(
+              [{ kinds: [30818], limit }],
+              { signal }
+            );
 
-          if (newEvents.length > 0) {
-            console.log(`Found ${newEvents.length} additional wiki articles`);
-            const newArticles = newEvents.map(parseWikiArticleEvent);
-            newArticles.forEach(article => {
-              allArticles.push(article);
-              seenIds.add(article.id);
+            let newEventCount = 0;
+            const newArticles: WikiArticleInfo[] = [];
+
+            batch.forEach(event => {
+              if (!seenIds.has(event.id) && validateWikiArticleEvent(event)) {
+                const article = parseWikiArticleEvent(event);
+                allArticles.push(article);
+                newArticles.push(article);
+                seenIds.add(event.id);
+                newEventCount++;
+              }
             });
 
-            // Sort and update
-            allArticles.sort((a, b) => b.createdAt - a.createdAt);
-            queryClient.setQueryData(['wiki-articles'], [...allArticles]);
-          }
+            console.log(`Found ${newEventCount} new wiki articles in batch of ${batch.length}`);
 
-          console.log(`Total wiki articles loaded: ${allArticles.length}`);
-        } catch (err) {
-          console.log('Failed to fetch all wiki articles:', err);
+            // Update cache after each batch
+            if (newEventCount > 0) {
+              allArticles.sort((a, b) => b.createdAt - a.createdAt);
+              queryClient.setQueryData(['wiki-articles'], [...allArticles]);
+            }
+
+            // If we got fewer events than the limit, we likely have everything
+            if (batch.length < limit * 0.9) {
+              console.log(`Got ${batch.length} events with limit ${limit}, stopping`);
+              break;
+            }
+
+            // Small delay between batches
+            await new Promise(resolve => setTimeout(resolve, 200));
+          } catch (err) {
+            console.log(`Failed to fetch with limit ${limit}:`, err);
+          }
         }
+
+        console.log(`Total wiki articles loaded: ${allArticles.length}`);
 
       } catch (error) {
         console.error('Background fetch error:', error);

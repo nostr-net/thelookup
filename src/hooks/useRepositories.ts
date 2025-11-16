@@ -40,9 +40,9 @@ export function useRepositories() {
   const query = useQuery({
     queryKey: ['repositories'],
     queryFn: async (c) => {
-      const signal = AbortSignal.any([c.signal, AbortSignal.timeout(10000)]);
-      // Fetch a larger initial batch to reduce missing events
-      const events = await nostr.query([{ kinds: [30617], limit: 500 }], { signal });
+      const signal = AbortSignal.any([c.signal, AbortSignal.timeout(5000)]);
+      // Fetch only 15 initially for instant page load
+      const events = await nostr.query([{ kinds: [30617], limit: 15 }], { signal });
 
       // Filter events through validator to ensure they meet NIP-34 requirements
       return events.filter(validateRepositoryEvent);
@@ -50,7 +50,7 @@ export function useRepositories() {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  // Background fetching to get ALL events without any time filtering
+  // Background fetching to get ALL events through progressive loading
   useEffect(() => {
     if (!query.data || fetchingRef.current) return;
 
@@ -61,37 +61,50 @@ export function useRepositories() {
         const allEvents: NostrEvent[] = [...query.data];
         const seenIds = new Set(allEvents.map(e => e.id));
 
-        // Fetch ALL events without ANY time constraints - just get everything
-        try {
-          console.log('Fetching all repositories without time filtering...');
-          const signal = AbortSignal.timeout(15000);
+        // Progressive fetching strategy: fetch increasingly large batches
+        // to ensure we get ALL events from the relay
+        const limits = [1000, 2000, 5000, 10000];
 
-          // First batch - get up to 2000 events
-          const allBatch = await nostr.query(
-            [{ kinds: [30617], limit: 2000 }],
-            { signal }
-          );
+        for (const limit of limits) {
+          try {
+            console.log(`Fetching repositories with limit ${limit}...`);
+            const signal = AbortSignal.timeout(20000);
 
-          const newEvents = allBatch
-            .filter(e => !seenIds.has(e.id))
-            .filter(validateRepositoryEvent);
+            const batch = await nostr.query(
+              [{ kinds: [30617], limit }],
+              { signal }
+            );
 
-          if (newEvents.length > 0) {
-            console.log(`Found ${newEvents.length} additional events`);
-            newEvents.forEach(e => {
-              allEvents.push(e);
-              seenIds.add(e.id);
+            let newEventCount = 0;
+            batch.forEach(event => {
+              if (!seenIds.has(event.id) && validateRepositoryEvent(event)) {
+                allEvents.push(event);
+                seenIds.add(event.id);
+                newEventCount++;
+              }
             });
 
-            // Update cache with all events
-            queryClient.setQueryData(['repositories'], [...allEvents]);
-          }
+            console.log(`Found ${newEventCount} new events in batch of ${batch.length}`);
 
-          console.log(`Total repositories loaded: ${allEvents.length}`);
-        } catch (err) {
-          console.log('Failed to fetch all events:', err);
+            // Update cache after each batch
+            if (newEventCount > 0) {
+              queryClient.setQueryData(['repositories'], [...allEvents]);
+            }
+
+            // If we got fewer events than the limit, we likely have everything
+            if (batch.length < limit * 0.9) {
+              console.log(`Got ${batch.length} events with limit ${limit}, stopping`);
+              break;
+            }
+
+            // Small delay between batches
+            await new Promise(resolve => setTimeout(resolve, 200));
+          } catch (err) {
+            console.log(`Failed to fetch with limit ${limit}:`, err);
+          }
         }
 
+        console.log(`Total repositories loaded: ${allEvents.length}`);
       } catch (error) {
         console.error('Background fetch error:', error);
       } finally {
@@ -306,7 +319,7 @@ export function usePatchComments(patchId: string) {
       const events = await nostr.query([{
         kinds: [1],
         '#e': [patchId],
-        limit: 50
+        limit: 200
       }], { signal });
 
       return events.sort((a, b) => a.created_at - b.created_at);

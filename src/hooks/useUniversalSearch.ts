@@ -98,10 +98,8 @@ export function useUniversalSearch(options: SearchOptions) {
       // Apply sorting
       filtered = sortResults(filtered, options.sortBy);
 
-      // Apply pagination
-      const offset = options.offset || 0;
-      const limit = options.limit || 50;
-      return filtered.slice(offset, offset + limit);
+      // Return all results without pagination limits
+      return filtered;
     },
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes

@@ -54,7 +54,7 @@ describe('useNipsByKind', () => {
       [{
         kinds: [30817],
         '#k': ['1'],
-        limit: 50,
+        limit: 200,
       }],
       expect.objectContaining({
         signal: expect.any(AbortSignal),

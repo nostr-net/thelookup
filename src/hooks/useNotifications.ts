@@ -20,13 +20,13 @@ export function useNotifications() {
             kinds: [7, 1111],
             '#k': ['30817'],
             '#p': [user.pubkey],
-            limit: 100,
+            limit: 500,
           },
           // Fork notifications - custom NIPs that tag the user
           {
             kinds: [30817],
             '#p': [user.pubkey],
-            limit: 50,
+            limit: 200,
           }
         ],
         { signal: AbortSignal.any([signal, AbortSignal.timeout(5000)]) }

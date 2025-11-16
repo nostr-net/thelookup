@@ -187,16 +187,16 @@ export function useDVMJobs() {
             {
               kinds: Array.from({ length: 1000 }, (_, i) => 5000 + i), // 5000-5999
               authors: [user.pubkey],
-              limit: 50,
+              limit: 200,
             }
           ], { signal }),
-          
+
           // Job results for the current user's jobs
           nostr.query([
             {
               kinds: Array.from({ length: 1000 }, (_, i) => 6000 + i), // 6000-6999
               '#p': [user.pubkey],
-              limit: 100,
+              limit: 500,
             }
           ], { signal }),
           

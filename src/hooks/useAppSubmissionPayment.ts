@@ -251,7 +251,7 @@ export function useAppSubmissionPayment() {
           kinds: [9735],
           '#p': [lightningProfile.pubkey],
           since: Math.floor(Date.now() / 1000) - 600, // Last 10 minutes
-          limit: 50,
+          limit: 100,
         },
         // 4. Receipts from our user (any recipient)
         {
@@ -518,7 +518,7 @@ export function useAppSubmissionPayment() {
       kinds: [9735],
       '#p': [lightningProfile.pubkey],
       since: Math.floor(Date.now() / 1000) - 21600, // Last 6 hours
-      limit: 50,
+      limit: 100,
     }]);
     
     console.log(`Found ${receiptsToTarget.length} receipts to bitkarrot@primal.net in last 6 hours`);

@@ -21,7 +21,7 @@ export function useAllNipsByKind(kind: string) {
         [{
           kinds: [30817],
           '#k': [kind],
-          limit: 50,
+          limit: 200,
         }],
         { signal: AbortSignal.any([signal, AbortSignal.timeout(5000)]) }
       );
