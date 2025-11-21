@@ -27,7 +27,8 @@ export function AppListItem({ app }: AppListItemProps) {
     relays: [config.relayUrl],
   });
 
-  const displayName = app.name || app.dTag || 'App';
+  // Use app name, fallback to author name, then generated name (same as AppCard)
+  const displayName = app.name || authorName;
 
   return (
     <div className="flex items-center gap-4 p-4 border-b hover:bg-muted/50 transition-colors">
