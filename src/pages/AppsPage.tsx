@@ -162,7 +162,7 @@ export default function AppsPage() {
                         </div>
                       </SelectItem>
                       {POPULAR_KINDS.map(({ kind, name, icon }) => {
-                        const appCount = filteredApps.filter(app => app.supportedKinds.includes(kind)).length || 0;
+                        const appCount = apps?.filter(app => app.supportedKinds.includes(kind)).length || 0;
                         if (appCount === 0) return null;
 
                         return (
@@ -201,7 +201,7 @@ export default function AppsPage() {
                         </div>
                       </SelectItem>
                       {allTags.map(tag => {
-                        const appCount = filteredApps.filter(app => app.tags?.includes(tag)).length || 0;
+                        const appCount = apps?.filter(app => app.tags?.includes(tag)).length || 0;
                         if (appCount === 0) return null;
 
                         return (
